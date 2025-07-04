@@ -3,7 +3,7 @@ from .models import Room, Reservation
 
 @admin.register(Room)
 class RoomAdmin(admin.ModelAdmin):
-    list_display = ('name', 'capacity', 'is_active')
+    list_display = ('name', 'capacity', 'is_active', 'color')
     list_filter = ('is_active',)
     search_fields = ('name',)
 

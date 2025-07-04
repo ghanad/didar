@@ -7,6 +7,7 @@ class Room(models.Model):
     name = models.CharField(max_length=100, unique=True)
     capacity = models.PositiveIntegerField()
     is_active = models.BooleanField(default=True)
+    color = models.CharField(max_length=7, default='#808080', help_text='Enter hex color code, e.g., #FF5733')
 
     def __str__(self):
         return self.name

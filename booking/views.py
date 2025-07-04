@@ -106,6 +106,7 @@ def reservation_api(request):
                     'end': event_end.isoformat(),
                     'url': reverse('booking:reservation_detail', args=[reservation.pk]),
                     'allDay': False,
+                    'color': reservation.room.color,
                 })
         else:
             if reservation.start_time and reservation.end_time:
@@ -115,6 +116,7 @@ def reservation_api(request):
                     'end': reservation.end_time.isoformat(),
                     'url': reverse('booking:reservation_detail', args=[reservation.pk]),
                     'allDay': False,
+                    'color': reservation.room.color,
                 })
     return JsonResponse(events, safe=False)
 
