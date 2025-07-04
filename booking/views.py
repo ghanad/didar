@@ -107,6 +107,7 @@ def reservation_api(request):
                     'allDay': False,
                     'color': reservation.room.color,
                     'extendedProps': {
+                        'room_name': reservation.room.name,
                         'organizer': reservation.organizer.username,
                         'description': reservation.description,
                         'it_support': 'Yes' if reservation.it_support_needed else 'No'
@@ -122,6 +123,7 @@ def reservation_api(request):
                     'allDay': False,
                     'color': reservation.room.color,
                     'extendedProps': {
+                        'room_name': reservation.room.name,
                         'organizer': reservation.organizer.username,
                         'description': reservation.description,
                         'it_support': 'Yes' if reservation.it_support_needed else 'No'
