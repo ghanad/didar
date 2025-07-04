@@ -4,7 +4,11 @@
 
 {% block extra_head %}
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/main.min.css' rel='stylesheet' />
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/moment-jalaali@0.9.2/build/moment-jalaali.min.js'></script>
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/moment-jalaali@6.1.11/index.global.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/google-calendar@6.1.11/index.global.min.js'></script>
     <style>
         /* Optional: Add some spacing */
         .calendar-controls {
@@ -55,8 +59,11 @@
                     center: 'title',
                     right: 'dayGridMonth,timeGridWeek,timeGridDay'
                 },
+                locale: 'fa', // Translate to Persian
+                firstDay: 6, // Week starts on Saturday (Shanbe)
+                weekends: true, // Explicitly enable weekends
                 businessHours: {
-                    daysOfWeek: [ 1, 2, 3, 4, 5 ], // Monday - Friday
+                    daysOfWeek: [ 0, 1, 2, 3, 6 ], // Sunday - Wednesday, Saturday (excluding Thursday and Friday)
                     startTime: '{{ business_hours_start }}', // 8 AM
                     endTime: '{{ business_hours_end }}' // 6 PM
                 },
@@ -79,22 +86,23 @@
                     document.getElementById('eventITSupport').checked = false; // Uncheck IT support
                     createEventModal.show(); // Show the Bootstrap modal
                 },
-                events: function(fetchInfo, successCallback, failureCallback) {
-                    var roomId = document.getElementById('room-filter').value;
-                    var start = fetchInfo.start.toISOString();
-                    var end = fetchInfo.end.toISOString();
-
-                    // Correctly append query parameters
-                    var apiUrl = `{% url 'booking:reservation_api' %}?start=${start}&end=${end}`;
-                    if (roomId) {
-                        apiUrl += '&room_id=' + roomId;
+                eventSources: [
+                    // Source 1: Our existing reservations API
+                    {
+                        id: 'reservations', // Add an ID to reference this source
+                        url: "{% url 'booking:reservation_api' %}", // Static URL
+                        failure: function() {
+                            alert('there was an error while fetching reservations!');
+                        },
+                    },
+                    // Source 2: Iranian Holidays from Google Calendar
+                    {
+                        googleCalendarId: 'fa.ir#holiday@group.v.calendar.google.com',
+                        className: 'gcal-event', // for custom styling
+                        display: 'background' // Makes holidays look like background events
                     }
-
-                    fetch(apiUrl)
-                        .then(response => response.json())
-                        .then(data => successCallback(data))
-                        .catch(error => failureCallback(error));
-                },
+                ],
+                // googleCalendarApiKey: 'YOUR_GOOGLE_CALENDAR_API_KEY', // Placeholder for API key
                 // Makes events clickable
                 eventClick: function(info) {
                     info.jsEvent.preventDefault(); // don't let the browser navigate
@@ -168,7 +176,28 @@
             });
 
             document.getElementById('room-filter').addEventListener('change', function() {
-                calendar.refetchEvents();
+                var roomId = this.value; // Get the selected room ID
+
+                // Remove the existing reservations event source
+                var existingSource = calendar.getEventSourceById('reservations');
+                if (existingSource) {
+                    existingSource.remove();
+                }
+
+                // Construct the new URL for reservations
+                var newApiUrl = "{% url 'booking:reservation_api' %}";
+                if (roomId) {
+                    newApiUrl += '?room_id=' + roomId;
+                }
+
+                // Add the new event source
+                calendar.addEventSource({
+                    id: 'reservations',
+                    url: newApiUrl,
+                    failure: function() {
+                        alert('there was an error while fetching reservations!');
+                    },
+                });
             });
         });
     </script>
