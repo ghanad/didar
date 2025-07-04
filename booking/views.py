@@ -1,7 +1,7 @@
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
-from .models import Reservation
+from .models import Reservation, Room
 from .forms import ReservationForm
 from django.utils import timezone
 from django.http import JsonResponse
@@ -47,6 +47,11 @@ class ReservationUpdateView(LoginRequiredMixin, UpdateView):
 class CalendarView(LoginRequiredMixin, TemplateView):
     template_name = 'booking/calendar_view.html'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['rooms'] = Room.objects.filter(is_active=True)
+        return context
+
 class ReservationDeleteView(LoginRequiredMixin, DeleteView):
     model = Reservation
     template_name = 'booking/reservation_confirm_delete.html'
@@ -63,6 +68,9 @@ def reservation_api(request):
     end_date = parse_datetime(end_param) if end_param else None
 
     reservations = Reservation.objects.all()
+    room_id = request.GET.get('room_id')
+    if room_id:
+        reservations = reservations.filter(room__id=room_id)
     events = []
 
     for reservation in reservations:

@@ -8,6 +8,15 @@
 {% endblock %}
 
 {% block content %}
+    <div>
+        <label for="room-filter">Filter by Room:</label>
+        <select id="room-filter">
+            <option value="">All Rooms</option>
+            {% for room in rooms %}
+                <option value="{{ room.id }}">{{ room.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
     <div id='calendar'></div>
 
     <script>
@@ -20,9 +29,24 @@
                     center: 'title',
                     right: 'dayGridMonth,timeGridWeek,timeGridDay'
                 },
-                events: '/api/reservations/'
+                events: function(fetchInfo, successCallback, failureCallback) {
+                    var roomId = document.getElementById('room-filter').value;
+                    var apiUrl = '/api/reservations/';
+                    if (roomId) {
+                        apiUrl += '?room_id=' + roomId;
+                    }
+
+                    fetch(apiUrl)
+                        .then(response => response.json())
+                        .then(data => successCallback(data))
+                        .catch(error => failureCallback(error));
+                }
             });
             calendar.render();
+
+            document.getElementById('room-filter').addEventListener('change', function() {
+                calendar.refetchEvents();
+            });
         });
     </script>
 {% endblock %}
