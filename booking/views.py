@@ -8,6 +8,9 @@ from django.http import JsonResponse
 from django.urls import reverse
 from django.utils.dateparse import parse_datetime
 from datetime import datetime, timedelta
+import json
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
 # این کلاس دیگر استفاده نمی‌شود اما برای کامل بودن نگه می‌داریم
 class ReservationListView(LoginRequiredMixin, ListView):
@@ -110,3 +113,59 @@ def reservation_api(request):
                     'allDay': False,
                 })
     return JsonResponse(events, safe=False)
+
+@csrf_exempt
+def reservation_quick_create_api(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            title = data.get('title')
+            start_str = data.get('start')
+            end_str = data.get('end')
+            room_id = data.get('room_id')
+
+            if not all([title, start_str, end_str]):
+                return JsonResponse({'error': 'Missing required fields (title, start, end).'}, status=400)
+
+            try:
+                start_time = parse_datetime(start_str)
+                end_time = parse_datetime(end_str)
+            except ValueError:
+                return JsonResponse({'error': 'Invalid date/time format.'}, status=400)
+
+            if not start_time or not end_time:
+                return JsonResponse({'error': 'Invalid date/time values.'}, status=400)
+
+            if start_time >= end_time:
+                return JsonResponse({'error': 'Start time must be before end time.'}, status=400)
+
+            room = None
+            if room_id:
+                try:
+                    room = Room.objects.get(id=room_id)
+                except Room.DoesNotExist:
+                    return JsonResponse({'error': 'Room not found.'}, status=400)
+
+            # Conflict Detection
+            conflicting_reservations = Reservation.objects.filter(
+                room=room,
+                start_time__lt=end_time,
+                end_time__gt=start_time
+            )
+            if conflicting_reservations.exists():
+                return JsonResponse({'error': 'This time slot conflicts with an existing reservation.'}, status=400)
+
+            reservation = Reservation.objects.create(
+                title=title,
+                start_time=start_time,
+                end_time=end_time,
+                room=room,
+                organizer=request.user,
+                duration=end_time - start_time
+            )
+            return JsonResponse({'message': 'Reservation created successfully!', 'id': reservation.id}, status=201)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON.'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'Only POST requests are allowed.'}, status=405)

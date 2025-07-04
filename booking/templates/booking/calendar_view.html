@@ -42,12 +42,68 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             var calendarEl = document.getElementById('calendar');
+            var createEventModal = new bootstrap.Modal(document.getElementById('createEventModal'));
+            var eventTitleInput = document.getElementById('eventTitle');
+            var saveEventButton = document.getElementById('saveEventButton');
+
             var calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
                     right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                selectable: true, // Enable selection
+                selectMirror: true, // Show a mirror image of the selected area
+                select: function(info) {
+                    // Triggered when a user selects a time range
+                    eventTitleInput.value = ''; // Clear previous title
+                    createEventModal.show(); // Show the Bootstrap modal
+
+                    // One-time event listener for the Save button
+                    saveEventButton.onclick = function() {
+                        var title = eventTitleInput.value;
+                        var roomId = document.getElementById('room-filter').value;
+                        var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+                        if (title) {
+                            var postData = {
+                                title: title,
+                                start: info.startStr,
+                                end: info.endStr,
+                                room_id: roomId ? parseInt(roomId) : null // Send room_id if selected
+                            };
+
+                            fetch('{% url "booking:reservation_quick_create_api" %}', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': csrfToken
+                                },
+                                body: JSON.stringify(postData)
+                            })
+                            .then(response => response.json().then(data => ({status: response.status, body: data})))
+                            .then(result => {
+                                if (result.status >= 200 && result.status < 300) {
+                                    // Success
+                                    createEventModal.hide();
+                                    calendar.refetchEvents(); // Refresh calendar events
+                                } else {
+                                    // Error
+                                    alert('Error creating reservation: ' + (result.body.error || 'Unknown error'));
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert('Network error or server issue.');
+                            })
+                            .finally(() => {
+                                calendar.unselect(); // Unselect the date range
+                            });
+                        } else {
+                            alert('Meeting Title cannot be empty.');
+                        }
+                    };
                 },
                 events: function(fetchInfo, successCallback, failureCallback) {
                     var roomId = document.getElementById('room-filter').value;
@@ -75,9 +131,38 @@
             });
             calendar.render();
 
+            // Unselect on modal close (if not saved)
+            document.getElementById('createEventModal').addEventListener('hidden.bs.modal', function () {
+                calendar.unselect();
+            });
+
             document.getElementById('room-filter').addEventListener('change', function() {
                 calendar.refetchEvents();
             });
         });
     </script>
+
+    <!-- Bootstrap Modal for Quick Event Creation -->
+    <div class="modal fade" id="createEventModal" tabindex="-1" aria-labelledby="createEventModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createEventModalLabel">New Meeting</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="eventTitle" class="form-label">Meeting Title</label>
+                            <input type="text" class="form-control" id="eventTitle" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveEventButton">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
