@@ -5,18 +5,38 @@
 {% block extra_head %}
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/main.min.css' rel='stylesheet' />
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+    <style>
+        /* Optional: Add some spacing */
+        .calendar-controls {
+            margin-bottom: 1.5rem;
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
-    <div>
-        <label for="room-filter">Filter by Room:</label>
-        <select id="room-filter">
-            <option value="">All Rooms</option>
-            {% for room in rooms %}
-                <option value="{{ room.id }}">{{ room.name }}</option>
-            {% endfor %}
-        </select>
+    
+    <!-- Header Section for Title and Controls -->
+    <div class="d-flex justify-content-between align-items-center calendar-controls">
+        <div>
+            <h1 class="h2">Reservations Calendar</h1>
+        </div>
+        <div class="d-flex align-items-center">
+            <div class="me-3">
+                <label for="room-filter" class="form-label visually-hidden">Filter by Room:</label>
+                <select id="room-filter" class="form-select">
+                    <option value="">All Rooms</option>
+                    {% for room in rooms %}
+                        <option value="{{ room.id }}">{{ room.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <a href="{% url 'booking:reservation_create' %}" class="btn btn-primary">Book a New Room</a>
+            </div>
+        </div>
     </div>
+    
+    <!-- Calendar Display Area -->
     <div id='calendar'></div>
 
     <script>
@@ -31,15 +51,26 @@
                 },
                 events: function(fetchInfo, successCallback, failureCallback) {
                     var roomId = document.getElementById('room-filter').value;
-                    var apiUrl = '/api/reservations/';
+                    var start = fetchInfo.start.toISOString();
+                    var end = fetchInfo.end.toISOString();
+
+                    // Correctly append query parameters
+                    var apiUrl = `{% url 'booking:reservation_api' %}?start=${start}&end=${end}`;
                     if (roomId) {
-                        apiUrl += '?room_id=' + roomId;
+                        apiUrl += '&room_id=' + roomId;
                     }
 
                     fetch(apiUrl)
                         .then(response => response.json())
                         .then(data => successCallback(data))
                         .catch(error => failureCallback(error));
+                },
+                // Makes events clickable
+                eventClick: function(info) {
+                    info.jsEvent.preventDefault(); // don't let the browser navigate
+                    if (info.event.url) {
+                        window.open(info.event.url);
+                    }
                 }
             });
             calendar.render();

@@ -9,6 +9,7 @@ from django.urls import reverse
 from django.utils.dateparse import parse_datetime
 from datetime import datetime, timedelta
 
+# این کلاس دیگر استفاده نمی‌شود اما برای کامل بودن نگه می‌داریم
 class ReservationListView(LoginRequiredMixin, ListView):
     model = Reservation
     template_name = 'booking/reservation_list.html'
@@ -27,7 +28,8 @@ class ReservationCreateView(LoginRequiredMixin, CreateView):
     model = Reservation
     form_class = ReservationForm
     template_name = 'booking/reservation_form.html'
-    success_url = reverse_lazy('reservation_list')
+    # FIX: Add app_name 'booking' to the success_url
+    success_url = reverse_lazy('booking:reservation_list')
 
     def form_valid(self, form):
         form.instance.organizer = self.request.user
@@ -39,10 +41,12 @@ class ReservationUpdateView(LoginRequiredMixin, UpdateView):
     model = Reservation
     form_class = ReservationForm
     template_name = 'booking/reservation_form.html'
-    success_url = reverse_lazy('reservation_list')
+    # FIX: Add app_name 'booking' to the success_url
+    success_url = reverse_lazy('booking:reservation_list')
 
     def get_queryset(self):
-        return super().get_queryset().filter(organizer=self.request.user)
+        # این متد برای امنیت ضروری است
+        return self.model.objects.filter(organizer=self.request.user)
 
 class CalendarView(LoginRequiredMixin, TemplateView):
     template_name = 'booking/calendar_view.html'
@@ -55,17 +59,19 @@ class CalendarView(LoginRequiredMixin, TemplateView):
 class ReservationDeleteView(LoginRequiredMixin, DeleteView):
     model = Reservation
     template_name = 'booking/reservation_confirm_delete.html'
-    success_url = reverse_lazy('reservation_list')
+    # FIX: Add app_name 'booking' to the success_url
+    success_url = reverse_lazy('booking:reservation_list')
 
     def get_queryset(self):
-        return super().get_queryset().filter(organizer=self.request.user)
+        # این متد برای امنیت ضروری است
+        return self.model.objects.filter(organizer=self.request.user)
 
 def reservation_api(request):
     start_param = request.GET.get('start')
     end_param = request.GET.get('end')
 
-    start_date = parse_datetime(start_param) if start_param else None
-    end_date = parse_datetime(end_param) if end_param else None
+    start_date = parse_datetime(start_param) if start_param else timezone.now() - timedelta(days=30)
+    end_date = parse_datetime(end_param) if end_param else timezone.now() + timedelta(days=30)
 
     reservations = Reservation.objects.all()
     room_id = request.GET.get('room_id')
@@ -76,36 +82,31 @@ def reservation_api(request):
     for reservation in reservations:
         if reservation.recurrence_rule:
             if not reservation.start_time:
-                # For recurring events, start_time is crucial for occurrence generation
-                # If it's null, skip or handle as an error
                 continue
 
-            # Generate occurrences within the requested range
             for occurrence in reservation.recurrence_rule.between(start_date, end_date, inc=True):
-                # Ensure occurrence is timezone-aware if start_time is
                 if timezone.is_aware(reservation.start_time) and timezone.is_naive(occurrence):
                     occurrence = timezone.make_aware(occurrence, timezone.get_current_timezone())
                 elif timezone.is_naive(reservation.start_time) and timezone.is_aware(occurrence):
                     occurrence = timezone.make_naive(occurrence)
 
                 event_start = occurrence
-                event_end = occurrence + reservation.duration if reservation.duration else occurrence + timedelta(hours=1) # Default to 1 hour if duration is not set
+                event_end = occurrence + reservation.duration if reservation.duration else occurrence + timedelta(hours=1)
 
                 events.append({
                     'title': reservation.title,
                     'start': event_start.isoformat(),
                     'end': event_end.isoformat(),
                     'url': reverse('booking:reservation_detail', args=[reservation.pk]),
-                    'allDay': False, # Assuming recurring events are not all-day by default
+                    'allDay': False,
                 })
         else:
-            # Single event
             if reservation.start_time and reservation.end_time:
                 events.append({
                     'title': reservation.title,
                     'start': reservation.start_time.isoformat(),
                     'end': reservation.end_time.isoformat(),
                     'url': reverse('booking:reservation_detail', args=[reservation.pk]),
-                    'allDay': False, # Assuming single events are not all-day by default
+                    'allDay': False,
                 })
     return JsonResponse(events, safe=False)
