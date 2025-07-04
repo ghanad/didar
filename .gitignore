@@ -13,3 +13,6 @@ db.sqlite3
 # IDE specific
 .idea/
 .vscode/
+
+
+codeBase.json
