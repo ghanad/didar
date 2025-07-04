@@ -122,6 +122,8 @@ def reservation_quick_create_api(request):
     try:
         data = json.loads(request.body)
         title = data.get('title')
+        description = data.get('description', '')  # Default to empty string if not provided
+        it_support_needed = data.get('it_support_needed', False) # Default to False if not provided
         start_str = data.get('start')
         end_str = data.get('end')
         room_id = data.get('room_id')
@@ -160,6 +162,8 @@ def reservation_quick_create_api(request):
 
         reservation = Reservation.objects.create(
             title=title,
+            description=description,
+            it_support_needed=it_support_needed,
             start_time=start_time,
             end_time=end_time,
             room=room,

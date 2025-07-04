@@ -68,6 +68,8 @@
                     // Triggered when a user selects a time range
                     currentSelectionInfo = info; // Store the selection info
                     eventTitleInput.value = ''; // Clear previous title
+                    document.getElementById('eventDescription').value = ''; // Clear description
+                    document.getElementById('eventITSupport').checked = false; // Uncheck IT support
                     createEventModal.show(); // Show the Bootstrap modal
                 },
                 events: function(fetchInfo, successCallback, failureCallback) {
@@ -104,12 +106,16 @@
                 }
 
                 var title = eventTitleInput.value;
+                var description = document.getElementById('eventDescription').value;
+                var itSupportNeeded = document.getElementById('eventITSupport').checked;
                 var roomId = document.getElementById('room-filter').value;
                 var csrfToken = createEventModalEl.querySelector('input[name="csrfmiddlewaretoken"]').value;
 
                 if (title) {
                     var postData = {
                         title: title,
+                        description: description,
+                        it_support_needed: itSupportNeeded,
                         start: currentSelectionInfo.startStr,
                         end: currentSelectionInfo.endStr,
                         room_id: roomId ? parseInt(roomId) : null // Send room_id if selected
@@ -173,6 +179,14 @@
                         <div class="mb-3">
                             <label for="eventTitle" class="form-label">Meeting Title</label>
                             <input type="text" class="form-control" id="eventTitle" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="eventDescription" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="eventITSupport">
+                            <label class="form-check-label" for="eventITSupport">IT Support Needed</label>
                         </div>
                     </form>
                 </div>
