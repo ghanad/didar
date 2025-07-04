@@ -122,3 +122,7 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Custom Business Hours Settings
+BUSINESS_HOURS_START = '08:00:00'
+BUSINESS_HOURS_END = '20:00:00'

@@ -1,4 +1,5 @@
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from .models import Reservation, Room
@@ -50,7 +51,6 @@ class ReservationUpdateView(LoginRequiredMixin, UpdateView):
     success_url = reverse_lazy('booking:reservation_list')
 
     def get_queryset(self):
-        # این متد برای امنیت ضروری است
         return self.model.objects.filter(organizer=self.request.user)
 
 class CalendarView(LoginRequiredMixin, TemplateView):
@@ -59,6 +59,8 @@ class CalendarView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['rooms'] = Room.objects.filter(is_active=True)
+        context['business_hours_start'] = settings.BUSINESS_HOURS_START
+        context['business_hours_end'] = settings.BUSINESS_HOURS_END
         return context
 
 class ReservationDeleteView(LoginRequiredMixin, DeleteView):

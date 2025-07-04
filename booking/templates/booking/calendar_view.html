@@ -55,6 +55,13 @@
                     center: 'title',
                     right: 'dayGridMonth,timeGridWeek,timeGridDay'
                 },
+                businessHours: {
+                    daysOfWeek: [ 1, 2, 3, 4, 5 ], // Monday - Friday
+                    startTime: '{{ business_hours_start }}', // 8 AM
+                    endTime: '{{ business_hours_end }}' // 6 PM
+                },
+                slotMinTime: '{{ business_hours_start }}', // Start calendar at 8 AM
+                slotMaxTime: '{{ business_hours_end }}', // End calendar at 6 PM
                 selectable: true, // Enable selection
                 selectMirror: true, // Show a mirror image of the selected area
                 select: function(info) {
@@ -94,7 +101,8 @@
                     if (info.event.url) {
                         window.open(info.event.url);
                     }
-                }
+                },
+                expandRows: true
             });
             calendar.render();
 
