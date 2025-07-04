@@ -1,9 +1,7 @@
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
+from django.views.generic import TemplateView
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.urls import reverse_lazy
 from .models import Reservation, Room
-from .forms import ReservationForm
 from django.utils import timezone
 from django.http import JsonResponse
 from django.urls import reverse
@@ -16,43 +14,6 @@ from django.contrib.auth.decorators import login_required
 
 logger = logging.getLogger(__name__)
 
-class ReservationListView(LoginRequiredMixin, ListView):
-    model = Reservation
-    template_name = 'booking/reservation_list.html'
-    context_object_name = 'reservations'
-    ordering = ['start_time']
-
-    def get_queryset(self):
-        return super().get_queryset().filter(start_time__gt=timezone.now())
-
-class ReservationDetailView(LoginRequiredMixin, DetailView):
-    model = Reservation
-    template_name = 'booking/reservation_detail.html'
-    context_object_name = 'reservation'
-
-class ReservationCreateView(LoginRequiredMixin, CreateView):
-    model = Reservation
-    form_class = ReservationForm
-    template_name = 'booking/reservation_form.html'
-    # FIX: Add app_name 'booking' to the success_url
-    success_url = reverse_lazy('booking:reservation_list')
-
-    def form_valid(self, form):
-        form.instance.organizer = self.request.user
-        if form.instance.start_time and form.instance.end_time:
-            form.instance.duration = form.instance.end_time - form.instance.start_time
-        return super().form_valid(form)
-
-class ReservationUpdateView(LoginRequiredMixin, UpdateView):
-    model = Reservation
-    form_class = ReservationForm
-    template_name = 'booking/reservation_form.html'
-    # FIX: Add app_name 'booking' to the success_url
-    success_url = reverse_lazy('booking:reservation_list')
-
-    def get_queryset(self):
-        return self.model.objects.filter(organizer=self.request.user)
-
 class CalendarView(LoginRequiredMixin, TemplateView):
     template_name = 'booking/calendar_view.html'
 
@@ -62,15 +23,6 @@ class CalendarView(LoginRequiredMixin, TemplateView):
         context['business_hours_start'] = settings.BUSINESS_HOURS_START
         context['business_hours_end'] = settings.BUSINESS_HOURS_END
         return context
-
-class ReservationDeleteView(LoginRequiredMixin, DeleteView):
-    model = Reservation
-    template_name = 'booking/reservation_confirm_delete.html'
-    # FIX: Add app_name 'booking' to the success_url
-    success_url = reverse_lazy('booking:reservation_list')
-
-    def get_queryset(self):
-        return self.model.objects.filter(organizer=self.request.user)
 
 def reservation_api(request):
     start_param = request.GET.get('start')
@@ -120,7 +72,6 @@ def reservation_api(request):
                     'title': reservation.title,
                     'start': reservation.start_time.isoformat(),
                     'end': reservation.end_time.isoformat(),
-                    'url': reverse('booking:reservation_detail', args=[reservation.pk]),
                     'allDay': False,
                     'color': reservation.room.color,
                     'extendedProps': {
@@ -259,3 +210,21 @@ def reservation_update_api(request, pk):
         logger.error(f"Error updating reservation {pk}: {e}", exc_info=True)
         return JsonResponse({'error': 'An unexpected server error occurred.'}, status=500)
 # --- END OF CHANGES - Step 1 ---
+
+@require_http_methods(["DELETE"]) # This view only accepts DELETE requests
+@login_required
+def reservation_delete_api(request, pk):
+    try:
+        reservation = get_object_or_404(Reservation, pk=pk)
+
+        # Security Check: User must be the organizer to delete
+        if reservation.organizer != request.user:
+            return JsonResponse({'error': 'You do not have permission to delete this reservation.'}, status=403)
+
+        reservation.delete()
+
+        return JsonResponse({'message': 'Reservation deleted successfully.'}, status=200)
+
+    except Exception as e:
+        logger.error(f"Error deleting reservation {pk}: {e}", exc_info=True)
+        return JsonResponse({'error': 'An unexpected server error occurred.'}, status=500)

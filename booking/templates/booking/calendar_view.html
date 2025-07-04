@@ -35,7 +35,6 @@
                 </select>
             </div>
             <div>
-                <a href="{% url 'booking:reservation_create' %}" class="btn btn-primary">Book a New Room</a>
             </div>
         </div>
     </div>
@@ -156,6 +155,7 @@
                         endStr: info.event.endStr
                     };
 
+                    document.getElementById('deleteEventButton').style.display = 'inline-block'; // Show delete button
                     createEventModal.show();
                 },
 
@@ -226,7 +226,7 @@
                     end: currentSelectionInfo.endStr,
                 };
 
-                var url = isUpdate ? `{% url 'booking:reservation_list' %}api/reservations/${eventPk}/update/` : `{% url "booking:reservation_quick_create_api" %}`;
+                var url = isUpdate ? `{% url 'booking:calendar_view' %}api/reservations/${eventPk}/update/` : `{% url "booking:reservation_quick_create_api" %}`;
                 var method = isUpdate ? 'PUT' : 'POST';
                 var csrfToken = createEventModalEl.querySelector('input[name="csrfmiddlewaretoken"]').value;
 
@@ -252,10 +252,48 @@
                     alert('A network error occurred.');
                 });
             });
+            document.getElementById('deleteEventButton').addEventListener('click', function() {
+                var eventPk = document.getElementById('eventPk').value;
+                if (!eventPk) {
+                    alert('Cannot delete an event without an ID.');
+                    return;
+                }
+
+                if (confirm('Are you sure you want to permanently delete this reservation?')) {
+                    var url = `{% url 'booking:calendar_view' %}api/reservations/${eventPk}/delete/`;
+                    var csrfToken = createEventModalEl.querySelector('input[name="csrfmiddlewaretoken"]').value;
+
+                    fetch(url, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRFToken': csrfToken
+                        }
+                    })
+                    .then(response => {
+                        if (response.ok) { // Status 200-299
+                            return response.json();
+                        } else {
+                            // Try to get error message from backend
+                            return response.json().then(data => { throw new Error(data.error || 'Failed to delete.'); });
+                        }
+                    })
+                    .then(result => {
+                        console.log(result.message);
+                        createEventModal.hide();
+                        calendar.refetchEvents();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Error deleting reservation: ' + error.message);
+                    });
+                }
+            });
             // END OF CHANGES - Step 3
 
             // Unselect on modal close and reset state
             document.getElementById('createEventModal').addEventListener('hidden.bs.modal', function () {
+                document.getElementById('deleteEventButton').style.display = 'none'; // Hide delete button on close
+                document.getElementById('createEventModalLabel').innerText = 'New Meeting';
                 // Reset the form to be ready for a "create" action next time
                 document.getElementById('createEventModalLabel').innerText = 'New Meeting';
                 document.getElementById('eventPk').value = ''; // Clear the hidden ID
@@ -334,10 +372,13 @@
                         </div>
                     </form>
                 </div>
+                <!-- START OF CHANGES - Step 3 -->
                 <div class="modal-footer">
+                    <button type="button" class="btn btn-danger me-auto" id="deleteEventButton" style="display: none;">Delete</button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <button type="button" class="btn btn-primary" id="saveEventButton">Save</button>
                 </div>
+                <!-- END OF CHANGES - Step 3 -->
             </div>
         </div>
     </div>

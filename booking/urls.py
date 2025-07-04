@@ -1,17 +1,15 @@
 from django.urls import path
-from .views import ReservationListView, ReservationDetailView, ReservationCreateView, ReservationUpdateView, ReservationDeleteView, reservation_api, CalendarView, reservation_quick_create_api, reservation_update_api
+from .views import reservation_api, CalendarView, reservation_quick_create_api, reservation_update_api, reservation_delete_api
 
 app_name = 'booking'
 
 urlpatterns = [
-    path('', CalendarView.as_view(), name='reservation_list'),
-    path('<int:pk>/', ReservationDetailView.as_view(), name='reservation_detail'),
-    path('reservations/new/', ReservationCreateView.as_view(), name='reservation_create'),
-    path('reservations/<int:pk>/edit/', ReservationUpdateView.as_view(), name='reservation_edit'),
-    path('reservations/<int:pk>/delete/', ReservationDeleteView.as_view(), name='reservation_delete'),
+    # The calendar is now the main view
+    path('', CalendarView.as_view(), name='calendar_view'),
+    
+    # API Endpoints
     path('api/reservations/', reservation_api, name='reservation_api'),
     path('api/reservations/quick_create/', reservation_quick_create_api, name='reservation_quick_create_api'),
-    # --- START OF CHANGES - Step 2 ---
     path('api/reservations/<int:pk>/update/', reservation_update_api, name='reservation_update_api'),
-    # --- END OF CHANGES - Step 2 ---
+    path('api/reservations/<int:pk>/delete/', reservation_delete_api, name='reservation_delete_api'),
 ]
