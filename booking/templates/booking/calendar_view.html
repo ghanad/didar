@@ -110,6 +110,41 @@
                         window.open(info.event.url);
                     }
                 },
+
+                eventMouseEnter: function(info) {
+                    // Prepare the content for the popover
+                    var props = info.event.extendedProps;
+                    var popoverContent = `
+                        <ul class="list-unstyled mb-0">
+                            <li><strong class="me-2">Organizer:</strong>${props.organizer}</li>
+                            <li><strong class="me-2">IT Support:</strong>${props.it_support}</li>
+                        `;
+                    if (props.description) {
+                        popoverContent += `<li><strong class="me-2">Description:</strong>${props.description}</li>`;
+                    }
+                    popoverContent += `</ul>`;
+
+                    // Initialize and show the Bootstrap Popover
+                    var popover = bootstrap.Popover.getOrCreateInstance(info.el, {
+                        title: info.event.title,
+                        content: popoverContent,
+                        placement: 'top',
+                        trigger: 'manual', // We will show/hide it manually
+                        html: true,
+                        sanitize: false, // We are creating the HTML, so it's safe
+                        container: 'body' // Important to prevent the popover from being trapped inside the calendar's scroll container
+                    });
+                    popover.show();
+                },
+
+                eventMouseLeave: function(info) {
+                    // Dispose of the popover when the mouse leaves
+                    var popover = bootstrap.Popover.getInstance(info.el);
+                    if (popover) {
+                        popover.dispose();
+                    }
+                },
+
                 expandRows: true
             });
             calendar.render();

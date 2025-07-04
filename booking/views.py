@@ -70,7 +70,6 @@ class ReservationDeleteView(LoginRequiredMixin, DeleteView):
     success_url = reverse_lazy('booking:reservation_list')
 
     def get_queryset(self):
-        # این متد برای امنیت ضروری است
         return self.model.objects.filter(organizer=self.request.user)
 
 def reservation_api(request):
@@ -107,6 +106,11 @@ def reservation_api(request):
                     'url': reverse('booking:reservation_detail', args=[reservation.pk]),
                     'allDay': False,
                     'color': reservation.room.color,
+                    'extendedProps': {
+                        'organizer': reservation.organizer.username,
+                        'description': reservation.description,
+                        'it_support': 'Yes' if reservation.it_support_needed else 'No'
+                    }
                 })
         else:
             if reservation.start_time and reservation.end_time:
@@ -117,6 +121,11 @@ def reservation_api(request):
                     'url': reverse('booking:reservation_detail', args=[reservation.pk]),
                     'allDay': False,
                     'color': reservation.room.color,
+                    'extendedProps': {
+                        'organizer': reservation.organizer.username,
+                        'description': reservation.description,
+                        'it_support': 'Yes' if reservation.it_support_needed else 'No'
+                    }
                 })
     return JsonResponse(events, safe=False)
 
