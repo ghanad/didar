@@ -120,10 +120,43 @@
                 // googleCalendarApiKey: 'YOUR_GOOGLE_CALENDAR_API_KEY', // Placeholder for API key
                 // Makes events clickable
                 eventClick: function(info) {
-                    info.jsEvent.preventDefault(); // don't let the browser navigate
-                    if (info.event.url) {
-                        window.open(info.event.url);
+                    info.jsEvent.preventDefault(); // Always prevent default navigation
+
+                    var props = info.event.extendedProps;
+                    // In a real app, you would get the current user's username from the template.
+                    // For this example, let's assume it's available via a template variable.
+                    var currentUser = "{{ request.user.username }}";
+                    
+                    // Allow editing only if the user is the organizer
+                    if (props.organizer_username !== currentUser) {
+                        alert("You can only edit your own reservations.");
+                        return;
                     }
+
+                    // --- Pre-fill and open the modal for editing ---
+                    document.getElementById('createEventModalLabel').innerText = 'Edit Meeting'; // Change modal title
+                    document.getElementById('eventPk').value = props.pk; // Set the hidden event ID
+                    document.getElementById('eventTitle').value = info.event.title;
+                    document.getElementById('eventDescription').value = props.description || '';
+                    document.getElementById('eventITSupport').checked = (props.it_support === 'Yes');
+                    
+                    // Find the room_id by its name (a bit fragile, but works for this case)
+                    // A better approach would be to pass room_id in extendedProps as well.
+                    var roomSelect = document.getElementById('eventRoom');
+                    for(var i=0; i < roomSelect.options.length; i++) {
+                        if(roomSelect.options[i].text === props.room_name) {
+                            roomSelect.value = roomSelect.options[i].value;
+                            break;
+                        }
+                    }
+
+                    // We need to store the start/end times for the save function
+                    currentSelectionInfo = {
+                        startStr: info.event.startStr,
+                        endStr: info.event.endStr
+                    };
+
+                    createEventModal.show();
                 },
 
                 eventMouseEnter: function(info) {
@@ -173,65 +206,64 @@
                     return;
                 }
 
-                var title = eventTitleInput.value;
-                var description = document.getElementById('eventDescription').value;
-                var itSupportNeeded = document.getElementById('eventITSupport').checked;
-                // Get the room ID from the MODAL's dropdown now
+                var eventPk = document.getElementById('eventPk').value;
+                var isUpdate = !!eventPk; // Check if we are in "update" mode
+
+                var title = document.getElementById('eventTitle').value;
                 var roomId = document.getElementById('eventRoom').value;
+
+                if (!title || !roomId) {
+                    alert('Title and Room are required fields.');
+                    return;
+                }
+
+                var postData = {
+                    title: title,
+                    description: document.getElementById('eventDescription').value,
+                    it_support_needed: document.getElementById('eventITSupport').checked,
+                    room_id: parseInt(roomId),
+                    start: currentSelectionInfo.startStr,
+                    end: currentSelectionInfo.endStr,
+                };
+
+                var url = isUpdate ? `{% url 'booking:reservation_list' %}api/reservations/${eventPk}/update/` : `{% url "booking:reservation_quick_create_api" %}`;
+                var method = isUpdate ? 'PUT' : 'POST';
                 var csrfToken = createEventModalEl.querySelector('input[name="csrfmiddlewaretoken"]').value;
 
-                // Add validation for both title and room selection
-                if (title && roomId) {
-                    var postData = {
-                        title: title,
-                        description: description,
-                        it_support_needed: itSupportNeeded,
-                        start: currentSelectionInfo.startStr,
-                        end: currentSelectionInfo.endStr,
-                        // Ensure room_id is an integer
-                        room_id: parseInt(roomId)
-                    };
-
-                    fetch('{% url "booking:reservation_quick_create_api" %}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': csrfToken
-                        },
-                        body: JSON.stringify(postData)
-                    })
-                    .then(response => response.json().then(data => ({status: response.status, body: data})))
-                    .then(result => {
-                        if (result.status >= 200 && result.status < 300) {
-                            // Success
-                            createEventModal.hide();
-                            calendar.refetchEvents(); // Refresh calendar events
-                            currentSelectionInfo = null; // Reset state
-                        } else {
-                            // Error
-                            alert('Error creating reservation: ' + (result.body.error || 'Unknown error'));
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('Network error or server issue.');
-                    })
-                    .finally(() => {
-                        calendar.unselect(); // Unselect the date range
-                    });
-                } else {
-                    // Give specific feedback to the user
-                    if (!title) {
-                        alert('Meeting Title cannot be empty.');
-                    } else if (!roomId) {
-                        alert('Please select a room.');
+                fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify(postData)
+                })
+                .then(response => response.json().then(data => ({status: response.status, body: data})))
+                .then(result => {
+                    if (result.status >= 200 && result.status < 300) {
+                        createEventModal.hide();
+                        calendar.refetchEvents();
+                    } else {
+                        alert('Error: ' + (result.body.error || 'Unknown server error'));
                     }
-                }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('A network error occurred.');
+                });
             });
             // END OF CHANGES - Step 3
 
             // Unselect on modal close and reset state
             document.getElementById('createEventModal').addEventListener('hidden.bs.modal', function () {
+                // Reset the form to be ready for a "create" action next time
+                document.getElementById('createEventModalLabel').innerText = 'New Meeting';
+                document.getElementById('eventPk').value = ''; // Clear the hidden ID
+                document.getElementById('eventTitle').value = '';
+                document.getElementById('eventDescription').value = '';
+                document.getElementById('eventITSupport').checked = false;
+                document.getElementById('eventRoom').value = '';
+                
                 calendar.unselect();
                 currentSelectionInfo = null; // Reset state
             });
@@ -274,6 +306,9 @@
                 <div class="modal-body">
                     <form>
                         {% csrf_token %}
+                        <!-- START OF CHANGES - Step 4 -->
+                        <input type="hidden" id="eventPk">
+                        <!-- END OF CHANGES - Step 4 -->
                         <div class="mb-3">
                             <label for="eventTitle" class="form-label">Meeting Title</label>
                             <input type="text" class="form-control" id="eventTitle" required>

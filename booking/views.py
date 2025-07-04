@@ -107,8 +107,9 @@ def reservation_api(request):
                     'allDay': False,
                     'color': reservation.room.color,
                     'extendedProps': {
+                        'pk': reservation.pk, # Add this
+                        'organizer_username': reservation.organizer.username, # Rename for clarity
                         'room_name': reservation.room.name,
-                        'organizer': reservation.organizer.username,
                         'description': reservation.description,
                         'it_support': 'Yes' if reservation.it_support_needed else 'No'
                     }
@@ -123,8 +124,9 @@ def reservation_api(request):
                     'allDay': False,
                     'color': reservation.room.color,
                     'extendedProps': {
+                        'pk': reservation.pk, # Add this
+                        'organizer_username': reservation.organizer.username, # Rename for clarity
                         'room_name': reservation.room.name,
-                        'organizer': reservation.organizer.username,
                         'description': reservation.description,
                         'it_support': 'Yes' if reservation.it_support_needed else 'No'
                     }
@@ -191,3 +193,69 @@ def reservation_quick_create_api(request):
     except Exception as e:
         logger.error("Error creating quick reservation: %s", e, exc_info=True)
         return JsonResponse({'error': 'An unexpected server error occurred.'}, status=500)
+# --- START OF CHANGES - Step 1 ---
+from django.views.decorators.http import require_http_methods
+from django.shortcuts import get_object_or_404
+
+@require_http_methods(["PUT"]) # This view only accepts PUT requests
+@login_required
+def reservation_update_api(request, pk):
+    try:
+        reservation = get_object_or_404(Reservation, pk=pk)
+
+        # Security Check: Ensure the user owns this reservation
+        if reservation.organizer != request.user:
+            return JsonResponse({'error': 'You do not have permission to edit this reservation.'}, status=403)
+
+        data = json.loads(request.body)
+        
+        # --- Data Extraction and Validation ---
+        title = data.get('title')
+        room_id = data.get('room_id')
+        start_str = data.get('start')
+        end_str = data.get('end')
+
+        if not all([title, room_id, start_str, end_str]):
+            return JsonResponse({'error': 'Missing required fields.'}, status=400)
+
+        try:
+            room = Room.objects.get(id=room_id)
+            start_time = parse_datetime(start_str)
+            end_time = parse_datetime(end_str)
+        except (Room.DoesNotExist, ValueError):
+            return JsonResponse({'error': 'Invalid room ID or date/time format.'}, status=400)
+        
+        if start_time >= end_time:
+            return JsonResponse({'error': 'Start time must be before end time.'}, status=400)
+
+        # --- Conflict Detection (excluding the current reservation) ---
+        conflicting = Reservation.objects.filter(
+            room=room,
+            start_time__lt=end_time,
+            end_time__gt=start_time
+        ).exclude(pk=pk) # Exclude the reservation we are currently editing
+
+        if conflicting.exists():
+            return JsonResponse({'error': 'This time slot conflicts with another reservation.'}, status=400)
+
+        # --- Update the reservation object ---
+        reservation.title = title
+        reservation.room = room
+        reservation.start_time = start_time
+        reservation.end_time = end_time
+        reservation.description = data.get('description', '')
+        reservation.it_support_needed = data.get('it_support_needed', False)
+        reservation.duration = end_time - start_time
+        # Note: Recurrence editing is not handled in this simplified API.
+        reservation.recurrence_rule = None
+
+        reservation.save()
+
+        return JsonResponse({'message': 'Reservation updated successfully!', 'id': reservation.id})
+
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON format.'}, status=400)
+    except Exception as e:
+        logger.error(f"Error updating reservation {pk}: {e}", exc_info=True)
+        return JsonResponse({'error': 'An unexpected server error occurred.'}, status=500)
+# --- END OF CHANGES - Step 1 ---
