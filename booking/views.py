@@ -1,6 +1,8 @@
-from django.views.generic import ListView, DetailView
+from django.views.generic import ListView, DetailView, CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.urls import reverse_lazy
 from .models import Reservation
+from .forms import ReservationForm
 from django.utils import timezone
 
 class ReservationListView(LoginRequiredMixin, ListView):
@@ -16,3 +18,13 @@ class ReservationDetailView(LoginRequiredMixin, DetailView):
     model = Reservation
     template_name = 'booking/reservation_detail.html'
     context_object_name = 'reservation'
+
+class ReservationCreateView(LoginRequiredMixin, CreateView):
+    model = Reservation
+    form_class = ReservationForm
+    template_name = 'booking/reservation_form.html'
+    success_url = reverse_lazy('reservation_list')
+
+    def form_valid(self, form):
+        form.instance.organizer = self.request.user
+        return super().form_valid(form)

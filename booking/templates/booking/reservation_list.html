@@ -4,6 +4,9 @@
 
 {% block content %}
 <h1 class="mb-4">Upcoming Reservations</h1>
+<p>
+    <a href="{% url 'booking:reservation_create' %}" class="btn btn-primary">Book a New Room</a>
+</p>
 <table class="table table-striped">
     <thead>
         <tr>
