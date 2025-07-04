@@ -106,6 +106,13 @@
                 createEventModal.show();
             },
             // END OF CHANGES - Step 2
+                eventDidMount: function(info) {
+                    // A better way to pass room_id and other data
+                    if (info.event.extendedProps) {
+                        info.event.extendedProps.room_id = info.event.extendedProps.room_id || null;
+                    }
+                },
+
                 eventSources: [
                     // Source 1: Our existing reservations API
                     {
@@ -142,9 +149,29 @@
                     document.getElementById('createEventModalLabel').innerText = 'Edit Meeting'; // Change modal title
                     document.getElementById('eventPk').value = props.pk; // Set the hidden event ID
                     document.getElementById('eventTitle').value = info.event.title;
-                    document.getElementById('eventDescription').value = props.description || '';
-                    document.getElementById('eventITSupport').checked = (props.it_support === 'Yes');
+                    var itSupportCheckbox = document.getElementById('eventITSupport');
+                    var itSupportDetailsContainer = document.getElementById('itSupportDetailsContainer');
+                    var itDescriptionTextarea = document.getElementById('eventITDescription');
+                    var generalDescriptionTextarea = document.getElementById('eventGeneralDescription');
+
+                    var isITSupportChecked = (props.it_support === 'Yes');
+                    itSupportCheckbox.checked = isITSupportChecked;
+
+                    // Split the description back into general and IT parts
+                    var fullDescription = props.description || '';
+                    var itMarker = "\n--- IT Support Requirements ---\n";
+                    var itDescIndex = fullDescription.indexOf(itMarker);
+
+                    if (isITSupportChecked && itDescIndex !== -1) {
+                        generalDescriptionTextarea.value = fullDescription.substring(0, itDescIndex).trim();
+                        itDescriptionTextarea.value = fullDescription.substring(itDescIndex + itMarker.length).trim();
+                    } else {
+                        generalDescriptionTextarea.value = fullDescription;
+                        itDescriptionTextarea.value = '';
+                    }
                     
+                    itSupportDetailsContainer.style.display = isITSupportChecked ? 'block' : 'none';
+
                     // Find the room_id by its name (a bit fragile, but works for this case)
                     // A better approach would be to pass room_id in extendedProps as well.
                     var roomSelect = document.getElementById('eventRoom');
@@ -223,10 +250,23 @@
                     return;
                 }
 
+                var generalDesc = document.getElementById('eventGeneralDescription').value.trim();
+                var itSupportNeeded = document.getElementById('eventITSupport').checked;
+                var itDesc = document.getElementById('eventITDescription').value.trim();
+                
+                var finalDescription = generalDesc;
+                if (itSupportNeeded && itDesc) {
+                    // Combine descriptions with a clear marker
+                    finalDescription += "\n\n--- IT Support Requirements ---\n" + itDesc;
+                } else if (itSupportNeeded && !itDesc) {
+                    // If box is checked but field is empty, just note that support is needed.
+                    finalDescription += "\n\n--- IT Support Required ---";
+                }
+
                 var postData = {
                     title: title,
-                    description: document.getElementById('eventDescription').value,
-                    it_support_needed: document.getElementById('eventITSupport').checked,
+                    description: finalDescription,
+                    it_support_needed: itSupportNeeded,
                     room_id: parseInt(roomId),
                     start: currentSelectionInfo.startStr,
                     end: currentSelectionInfo.endStr,
@@ -303,9 +343,16 @@
                 // Reset the form to be ready for a "create" action next time
                 document.getElementById('createEventModalLabel').innerText = 'New Meeting';
                 document.getElementById('eventPk').value = ''; // Clear the hidden ID
+                
+                // --- Reset IT Support field and hide its description ---
+                var itSupportCheckbox = document.getElementById('eventITSupport');
+                itSupportCheckbox.checked = false;
+                document.getElementById('itSupportDetailsContainer').style.display = 'none';
+                document.getElementById('eventITDescription').value = '';
+                // --- End of Reset ---
+
                 document.getElementById('eventTitle').value = '';
-                document.getElementById('eventDescription').value = '';
-                document.getElementById('eventITSupport').checked = false;
+                document.getElementById('eventGeneralDescription').value = '';
                 document.getElementById('eventRoom').value = '';
                 
                 calendar.unselect();
@@ -336,6 +383,19 @@
                     },
                 });
             });
+            
+            // --- START OF CHANGES - Step 2 ---
+            // Logic to show/hide the IT support description box
+            var itSupportCheckbox = document.getElementById('eventITSupport');
+            var itSupportDetailsContainer = document.getElementById('itSupportDetailsContainer');
+
+            itSupportCheckbox.addEventListener('change', function() {
+                itSupportDetailsContainer.style.display = this.checked ? 'block' : 'none';
+                if (!this.checked) {
+                    document.getElementById('eventITDescription').value = ''; // Clear IT description if unchecked
+                }
+            });
+            // --- END OF CHANGES - Step 2 ---
         });
     </script>
 
@@ -368,13 +428,21 @@
                             </select>
                         </div>
                         <!-- END OF CHANGES - Step 1 -->
+                        <!-- General Description (Always Visible) -->
                         <div class="mb-3">
-                            <label for="eventDescription" class="form-label">Description</label>
-                            <textarea class="form-control" id="eventDescription" rows="3"></textarea>
+                            <label for="eventGeneralDescription" class="form-label">Description (Optional)</label>
+                            <textarea class="form-control" id="eventGeneralDescription" rows="2"></textarea>
                         </div>
+
+                        <!-- IT Support Section -->
                         <div class="mb-3 form-check">
                             <input type="checkbox" class="form-check-input" id="eventITSupport">
                             <label class="form-check-label" for="eventITSupport">IT Support Needed</label>
+                        </div>
+                        <!-- Conditional IT Support Description Box -->
+                        <div class="mb-3" id="itSupportDetailsContainer" style="display: none;">
+                            <label for="eventITDescription" class="form-label">IT Support Requirements</label>
+                            <textarea class="form-control" id="eventITDescription" rows="2" placeholder="e.g., Projector, specific software, etc."></textarea>
                         </div>
                     </form>
                 </div>
