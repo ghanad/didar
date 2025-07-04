@@ -1,9 +1,11 @@
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from .models import Reservation
 from .forms import ReservationForm
 from django.utils import timezone
+from django.http import JsonResponse
+from django.urls import reverse
 
 class ReservationListView(LoginRequiredMixin, ListView):
     model = Reservation
@@ -38,6 +40,9 @@ class ReservationUpdateView(LoginRequiredMixin, UpdateView):
     def get_queryset(self):
         return super().get_queryset().filter(organizer=self.request.user)
 
+class CalendarView(LoginRequiredMixin, TemplateView):
+    template_name = 'booking/calendar_view.html'
+
 class ReservationDeleteView(LoginRequiredMixin, DeleteView):
     model = Reservation
     template_name = 'booking/reservation_confirm_delete.html'
@@ -45,3 +50,15 @@ class ReservationDeleteView(LoginRequiredMixin, DeleteView):
 
     def get_queryset(self):
         return super().get_queryset().filter(organizer=self.request.user)
+
+def reservation_api(request):
+    reservations = Reservation.objects.all()
+    events = []
+    for reservation in reservations:
+        events.append({
+            'title': reservation.title,
+            'start': reservation.start_time.isoformat(),
+            'end': reservation.end_time.isoformat(),
+            'url': reverse('booking:reservation_detail', args=[reservation.pk])
+        })
+    return JsonResponse(events, safe=False)
