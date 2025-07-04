@@ -29,5 +29,11 @@
         </dl>
     </div>
 </div>
-<a href="{% url 'reservation_list' %}" class="btn btn-primary mt-3">Back to List</a>
+{% if request.user == object.organizer %}
+    <div class="mt-3">
+        <a href="{% url 'booking:reservation_edit' object.pk %}" class="btn btn-warning">Edit</a>
+        <a href="{% url 'booking:reservation_delete' object.pk %}" class="btn btn-danger">Cancel Reservation</a>
+    </div>
+{% endif %}
+<a href="{% url 'booking:reservation_list' %}" class="btn btn-primary mt-3">Back to List</a>
 {% endblock %}

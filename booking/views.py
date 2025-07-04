@@ -1,4 +1,4 @@
-from django.views.generic import ListView, DetailView, CreateView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from .models import Reservation
@@ -28,3 +28,20 @@ class ReservationCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         form.instance.organizer = self.request.user
         return super().form_valid(form)
+
+class ReservationUpdateView(LoginRequiredMixin, UpdateView):
+    model = Reservation
+    form_class = ReservationForm
+    template_name = 'booking/reservation_form.html'
+    success_url = reverse_lazy('reservation_list')
+
+    def get_queryset(self):
+        return super().get_queryset().filter(organizer=self.request.user)
+
+class ReservationDeleteView(LoginRequiredMixin, DeleteView):
+    model = Reservation
+    template_name = 'booking/reservation_confirm_delete.html'
+    success_url = reverse_lazy('reservation_list')
+
+    def get_queryset(self):
+        return super().get_queryset().filter(organizer=self.request.user)
