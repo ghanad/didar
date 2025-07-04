@@ -14,6 +14,12 @@
         .calendar-controls {
             margin-bottom: 1.5rem;
         }
+        /* Fix for RTL title display in FullCalendar */
+        .fc-toolbar-title {
+            direction: rtl;
+            unicode-bidi: embed;
+            text-align: center; /* Ensures title remains centered */
+        }
     </style>
 {% endblock %}
 
