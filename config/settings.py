@@ -31,6 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'users.apps.UsersConfig',
     'booking.apps.BookingConfig',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -134,3 +135,5 @@ BUSINESS_HOURS_END = '20:00:00'
 RUNSERVER_PLUS_EXCLUDE_DIRS = [
     BASE_DIR / 'venv',
 ]
+
+LOGIN_URL = 'users:login'

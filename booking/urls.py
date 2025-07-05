@@ -6,7 +6,7 @@ from .views import (
     reservation_update_api, 
     reservation_delete_api, 
     user_search_api,
-    reservation_drag_update_api  # Import the new view
+    reservation_drag_update_api,  # Import the new view
 )
 
 app_name = 'booking'
