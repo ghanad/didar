@@ -289,3 +289,51 @@ def user_search_api(request):
             'email': user.email,
         })
     return JsonResponse(results, safe=False)
+
+@require_http_methods(["PATCH"])
+@login_required
+def reservation_drag_update_api(request, pk):
+    try:
+        reservation = get_object_or_404(Reservation, pk=pk)
+
+        if reservation.organizer != request.user:
+            return JsonResponse({'error': 'You do not have permission to edit this reservation.'}, status=403)
+
+        data = json.loads(request.body)
+        start_str = data.get('start')
+        end_str = data.get('end')
+
+        if not start_str or not end_str:
+            return JsonResponse({'error': 'Start and end times are required.'}, status=400)
+
+        try:
+            start_time = parse_datetime(start_str)
+            end_time = parse_datetime(end_str)
+        except ValueError:
+            return JsonResponse({'error': 'Invalid date/time format.'}, status=400)
+
+        if start_time >= end_time:
+            return JsonResponse({'error': 'Start time must be before end time.'}, status=400)
+
+        # Conflict Detection
+        conflicting = Reservation.objects.filter(
+            room=reservation.room,
+            start_time__lt=end_time,
+            end_time__gt=start_time
+        ).exclude(pk=pk)
+
+        if conflicting.exists():
+            return JsonResponse({'error': 'This time slot conflicts with another reservation.'}, status=400)
+
+        reservation.start_time = start_time
+        reservation.end_time = end_time
+        reservation.duration = end_time - start_time
+        reservation.save(update_fields=['start_time', 'end_time', 'duration'])
+
+        return JsonResponse({'message': 'Reservation updated successfully.'})
+
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON.'}, status=400)
+    except Exception as e:
+        logger.error(f"Error updating reservation {pk} via drag: {e}", exc_info=True)
+        return JsonResponse({'error': 'An unexpected server error occurred.'}, status=500)

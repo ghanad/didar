@@ -125,6 +125,7 @@
                 slotMaxTime: '{{ business_hours_end }}', // End calendar at 6 PM
                 selectable: true, // Enable selection
                 selectMirror: true, // Show a mirror image of the selected area
+                editable: true, // Enable dragging and resizing
 // START OF CHANGES - Step 2
             select: function(info) {
                 // This check is now removed. The modal will always open.
@@ -246,6 +247,49 @@
 
                     document.getElementById('deleteEventButton').style.display = 'inline-block'; // Show delete button
                     createEventModal.show();
+                },
+                eventDrop: function(info) {
+                    var event = info.event;
+                    var newStart = event.start.toISOString();
+                    var newEnd = event.end ? event.end.toISOString() : null; // End might be null for all-day events
+
+                    // Get the CSRF token from the modal's form
+                    var csrfToken = createEventModalEl.querySelector('input[name="csrfmiddlewaretoken"]').value;
+                    var urlTemplate = `{% url 'booking:reservation_drag_update_api' pk=9999 %}`; // Using a placeholder
+                    var url = urlTemplate.replace('9999', event.extendedProps.pk);
+
+                    fetch(url, {
+                        method: 'PATCH', // Using PATCH to partially update the event
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
+                        },
+                        body: JSON.stringify({
+                            start: newStart,
+                            end: newEnd
+                        })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            // If the server responds with an error, revert the event's position
+                            info.revert();
+                            return response.json().then(data => {
+                                alert('Error updating event: ' + (data.error || 'Unknown error'));
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data) {
+                            console.log('Event updated successfully:', data);
+                            calendar.refetchEvents(); // Refetch to ensure data is fresh
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        info.revert();
+                        alert('A network error occurred while updating the event.');
+                    });
                 },
 
                 eventMouseEnter: function(info) {
