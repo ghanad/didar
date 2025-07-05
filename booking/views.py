@@ -66,7 +66,7 @@ def reservation_api(request):
                         'room_name': reservation.room.name,
                         'description': reservation.description,
                         'it_support': 'Yes' if reservation.it_support_needed else 'No',
-                        'attendees': [{'name': attendee.user.get_full_name() if attendee.user else attendee.email, 'value': attendee.email} for attendee in reservation.attendees.all()]
+                        'attendee_list': [{'name': attendee.user.get_full_name() if attendee.user else attendee.email, 'value': attendee.email} for attendee in reservation.attendees.all()]
                     }
                 })
         else:
@@ -83,7 +83,7 @@ def reservation_api(request):
                         'room_name': reservation.room.name,
                         'description': reservation.description,
                         'it_support': 'Yes' if reservation.it_support_needed else 'No',
-                        'attendees': [{'name': attendee.user.get_full_name() if attendee.user else attendee.email, 'value': attendee.email} for attendee in reservation.attendees.all()]
+                        'attendee_list': [{'name': attendee.user.get_full_name() if attendee.user else attendee.email, 'value': attendee.email} for attendee in reservation.attendees.all()]
                     }
                 })
     return JsonResponse(events, safe=False)

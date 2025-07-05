@@ -199,9 +199,9 @@
                     document.getElementById('eventPk').value = props.pk; // Set the hidden event ID
                     document.getElementById('eventTitle').value = info.event.title;
                     // Populate Tagify with attendees
-                    if (props.attendees) {
+                    if (props.attendee_list) {
                         tagify.removeAllTags(); // Clear existing tags
-                        tagify.addTags(props.attendees); // Add new tags
+                        tagify.addTags(props.attendee_list); // Add new tags
                     } else {
                         tagify.removeAllTags(); // Ensure it's empty if no attendees
                     }
@@ -254,9 +254,13 @@
                     var popoverContent = `
                         <ul class="list-unstyled mb-0">
                             <li><strong class="me-2">Room:</strong>${props.room_name}</li>
-                            <li><strong class="me-2">Organizer:</strong>${props.organizer}</li>
+                            <li><strong class="me-2">Organizer:</strong>${props.organizer_username}</li>
                             <li><strong class="me-2">IT Support:</strong>${props.it_support}</li>
                         `;
+                    if (props.attendee_list && props.attendee_list.length > 0) {
+                        var attendeeNames = props.attendee_list.map(att => att.name).join(', ');
+                        popoverContent += `<li><strong class="me-2">Attendees:</strong>${attendeeNames}</li>`;
+                    }
                     if (props.description) {
                         popoverContent += `<li><strong class="me-2">Description:</strong>${props.description}</li>`;
                     }
