@@ -26,3 +26,24 @@ class Reservation(models.Model):
 
     def __str__(self):
         return f"Reservation for '{self.title}' in '{self.room.name}' on {self.start_time}"
+
+class Attendee(models.Model):
+    reservation = models.ForeignKey(Reservation, on_delete=models.CASCADE, related_name='attendees')
+    email = models.EmailField(blank=False)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    rsvp_status = models.CharField(
+        max_length=20,
+        choices=[
+            ('NEEDS_ACTION', 'Needs Action'),
+            ('ACCEPTED', 'Accepted'),
+            ('DECLINED', 'Declined'),
+            ('TENTATIVE', 'Tentative'),
+        ],
+        default='NEEDS_ACTION'
+    )
+
+    class Meta:
+        unique_together = ('reservation', 'email')
+
+    def __str__(self):
+        return f"{self.email} for reservation '{self.reservation.title}'"

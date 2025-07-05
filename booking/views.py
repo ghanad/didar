@@ -1,7 +1,9 @@
 from django.views.generic import TemplateView
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import Reservation, Room
+from django.db.models import Q
+from .models import Reservation, Room, Attendee
+from django.contrib.auth.models import User
 from django.utils import timezone
 from django.http import JsonResponse
 from django.urls import reverse
@@ -63,7 +65,8 @@ def reservation_api(request):
                         'organizer_username': reservation.organizer.username, # Rename for clarity
                         'room_name': reservation.room.name,
                         'description': reservation.description,
-                        'it_support': 'Yes' if reservation.it_support_needed else 'No'
+                        'it_support': 'Yes' if reservation.it_support_needed else 'No',
+                        'attendees': [{'name': attendee.user.get_full_name() if attendee.user else attendee.email, 'value': attendee.email} for attendee in reservation.attendees.all()]
                     }
                 })
         else:
@@ -79,11 +82,38 @@ def reservation_api(request):
                         'organizer_username': reservation.organizer.username, # Rename for clarity
                         'room_name': reservation.room.name,
                         'description': reservation.description,
-                        'it_support': 'Yes' if reservation.it_support_needed else 'No'
+                        'it_support': 'Yes' if reservation.it_support_needed else 'No',
+                        'attendees': [{'name': attendee.user.get_full_name() if attendee.user else attendee.email, 'value': attendee.email} for attendee in reservation.attendees.all()]
                     }
                 })
     return JsonResponse(events, safe=False)
 
+
+
+def manage_attendees(reservation, new_attendee_emails):
+    """
+    Manages Attendee objects for a given reservation.
+    Removes old attendees, adds new ones, and links to User objects if found.
+    """
+    existing_attendee_emails = {a.email for a in reservation.attendees.all()}
+    new_attendee_emails_set = set(new_attendee_emails)
+
+    # Remove old attendees
+    emails_to_remove = existing_attendee_emails - new_attendee_emails_set
+    for email in emails_to_remove:
+        reservation.attendees.filter(email=email).delete()
+
+    # Add new attendees
+    emails_to_add = new_attendee_emails_set - existing_attendee_emails
+    for email in emails_to_add:
+        attendee = Attendee(reservation=reservation, email=email)
+        try:
+            user = User.objects.get(email=email)
+            attendee.user = user
+        except User.DoesNotExist:
+            pass  # Leave user as None if not found
+        attendee.save()
+        
 @require_POST
 @login_required
 def reservation_quick_create_api(request):
@@ -92,6 +122,7 @@ def reservation_quick_create_api(request):
         title = data.get('title')
         description = data.get('description', '')  # Default to empty string if not provided
         it_support_needed = data.get('it_support_needed', False) # Default to False if not provided
+        attendees_emails = data.get('attendees', []) # Get attendees emails
         start_str = data.get('start')
         end_str = data.get('end')
         room_id = data.get('room_id')
@@ -138,13 +169,17 @@ def reservation_quick_create_api(request):
             organizer=request.user,
             duration=end_time - start_time
         )
+        
+        manage_attendees(reservation, attendees_emails)
+
         return JsonResponse({'message': 'Reservation created successfully!', 'id': reservation.id}, status=201)
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid JSON format in request body.'}, status=400)
     except Exception as e:
         logger.error("Error creating quick reservation: %s", e, exc_info=True)
         return JsonResponse({'error': 'An unexpected server error occurred.'}, status=500)
-# --- START OF CHANGES - Step 1 ---
+
+
 from django.views.decorators.http import require_http_methods
 from django.shortcuts import get_object_or_404
 
@@ -165,6 +200,7 @@ def reservation_update_api(request, pk):
         room_id = data.get('room_id')
         start_str = data.get('start')
         end_str = data.get('end')
+        attendees_emails = data.get('attendees', []) # Get attendees emails
 
         if not all([title, room_id, start_str, end_str]):
             return JsonResponse({'error': 'Missing required fields.'}, status=400)
@@ -201,6 +237,7 @@ def reservation_update_api(request, pk):
         reservation.recurrence_rule = None
 
         reservation.save()
+        manage_attendees(reservation, attendees_emails)
 
         return JsonResponse({'message': 'Reservation updated successfully!', 'id': reservation.id})
 
@@ -228,3 +265,27 @@ def reservation_delete_api(request, pk):
     except Exception as e:
         logger.error(f"Error deleting reservation {pk}: {e}", exc_info=True)
         return JsonResponse({'error': 'An unexpected server error occurred.'}, status=500)
+@login_required
+def user_search_api(request):
+    search_term = request.GET.get('q', '')
+
+    if len(search_term) < 2:
+        return JsonResponse([], safe=False)
+
+    users = User.objects.filter(
+        Q(username__icontains=search_term) |
+        Q(first_name__icontains=search_term) |
+        Q(last_name__icontains=search_term) |
+        Q(email__icontains=search_term)
+    ).distinct()[:10]
+
+    results = []
+    for user in users:
+        full_name = user.get_full_name()
+        display_name = full_name if full_name else user.username
+        results.append({
+            'value': user.email,
+            'name': display_name,
+            'email': user.email,
+        })
+    return JsonResponse(results, safe=False)

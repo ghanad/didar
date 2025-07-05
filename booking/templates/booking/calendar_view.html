@@ -21,6 +21,8 @@
             text-align: center; /* Ensures title remains centered */
         }
     </style>
+    <link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.min.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -51,6 +53,53 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             var calendarEl = document.getElementById('calendar');
+            var tagify = new Tagify(document.getElementById('eventAttendees'), {
+                tagTextProp: 'name', // Use 'name' for display, 'value' (email) for data
+                placeholder: "Add emails and press Enter...",
+                maxTags: 10, // Example: Limit to 10 attendees
+                dropdown: {
+                    maxItems: 20,           // <- mixumum allowed rendered suggestions
+                    classname: "tagify__inline__suggestions", // <- custom classname for this specific dropdown
+                    enabled: 0,             // <- show suggestions on focus
+                    closeOnSelect: false    // <- do not hide the suggestions dropdown once an item has been selected
+                }
+            });
+
+            var controller; // To abort previous fetch requests
+
+            function onInput(e) {
+                var value = e.detail.value;
+                tagify.whitelist = null; // Clear current whitelist
+
+                // Abort any previous request
+                if (controller) {
+                    controller.abort();
+                }
+                controller = new AbortController();
+
+                // Show loading animation and hide dropdown
+                tagify.loading(true).dropdown.hide();
+
+                if (value.length < 2) {
+                    tagify.loading(false);
+                    return;
+                }
+
+                fetch(`{% url 'booking:user_search_api' %}?q=${value}`, { signal: controller.signal })
+                    .then(res => res.json())
+                    .then(function(newWhitelist) {
+                        tagify.whitelist = newWhitelist; // Update whitelist with server response
+                        tagify.loading(false).dropdown.show(value); // Show the suggestions
+                    })
+                    .catch(err => {
+                        if (err.name !== 'AbortError') {
+                            console.error(err);
+                            tagify.loading(false);
+                        }
+                    });
+            }
+
+            tagify.on('input', onInput);
             var createEventModalEl = document.getElementById('createEventModal');
             var createEventModal = new bootstrap.Modal(createEventModalEl);
             var eventTitleInput = document.getElementById('eventTitle');
@@ -85,7 +134,7 @@
                 
                 // Clear all modal fields
                 eventTitleInput.value = '';
-                document.getElementById('eventDescription').value = '';
+                document.getElementById('eventGeneralDescription').value = '';
                 document.getElementById('eventITSupport').checked = false;
                 
                 // Get the new room dropdown from the modal
@@ -149,6 +198,13 @@
                     document.getElementById('createEventModalLabel').innerText = 'Edit Meeting'; // Change modal title
                     document.getElementById('eventPk').value = props.pk; // Set the hidden event ID
                     document.getElementById('eventTitle').value = info.event.title;
+                    // Populate Tagify with attendees
+                    if (props.attendees) {
+                        tagify.removeAllTags(); // Clear existing tags
+                        tagify.addTags(props.attendees); // Add new tags
+                    } else {
+                        tagify.removeAllTags(); // Ensure it's empty if no attendees
+                    }
                     var itSupportCheckbox = document.getElementById('eventITSupport');
                     var itSupportDetailsContainer = document.getElementById('itSupportDetailsContainer');
                     var itDescriptionTextarea = document.getElementById('eventITDescription');
@@ -263,6 +319,7 @@
                     finalDescription += "\n\n--- IT Support Required ---";
                 }
 
+                var attendeeEmails = tagify.value.map(tag => tag.value); // Get attendee emails from Tagify
                 var postData = {
                     title: title,
                     description: finalDescription,
@@ -270,6 +327,7 @@
                     room_id: parseInt(roomId),
                     start: currentSelectionInfo.startStr,
                     end: currentSelectionInfo.endStr,
+                    attendees: attendeeEmails, // Add attendee emails to postData
                 };
 
                 var url = isUpdate ? `{% url 'booking:calendar_view' %}api/reservations/${eventPk}/update/` : `{% url "booking:reservation_quick_create_api" %}`;
@@ -354,6 +412,7 @@
                 document.getElementById('eventTitle').value = '';
                 document.getElementById('eventGeneralDescription').value = '';
                 document.getElementById('eventRoom').value = '';
+                tagify.removeAllTags(); // Clear Tagify input on modal close
                 
                 calendar.unselect();
                 currentSelectionInfo = null; // Reset state
@@ -427,7 +486,10 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <!-- END OF CHANGES - Step 1 -->
+                        <div class="mb-3">
+                            <label for="eventAttendees" class="form-label">Attendees</label>
+                            <input type="text" class="form-control" id="eventAttendees" placeholder="Add emails and press Enter...">
+                        </div>
                         <!-- General Description (Always Visible) -->
                         <div class="mb-3">
                             <label for="eventGeneralDescription" class="form-label">Description (Optional)</label>
@@ -457,3 +519,4 @@
         </div>
     </div>
 {% endblock %}
+<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.min.js"></script>
