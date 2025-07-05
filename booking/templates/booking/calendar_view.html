@@ -128,7 +128,12 @@
                 editable: true, // Enable dragging and resizing
 // START OF CHANGES - Step 2
             select: function(info) {
-                // This check is now removed. The modal will always open.
+                // Prevent creating events in month view
+                if (info.view.type === 'dayGridMonth') {
+                    alert("Please select a time slot in the week or day view to create a new reservation.");
+                    calendar.unselect(); // Unselect the date range
+                    return;
+                }
                 
                 // Store the selection info
                 currentSelectionInfo = info;
