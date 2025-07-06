@@ -21,6 +21,35 @@
             text-align: center; /* Ensures title remains centered */
         }
     </style>
+    <style>
+        #createEventModal .modal-header,
+        #createEventModal .modal-body,
+        #createEventModal .modal-footer {
+            direction: rtl;
+            text-align: right;
+        }
+        /* Adjust specific elements that might need left alignment within RTL context */
+        #createEventModal .modal-header .btn-close {
+            margin-left: 0; /* Override default Bootstrap margin-left for close button */
+            margin-right: auto; /* Push close button to the left */
+        }
+        #createEventModal .form-check {
+            padding-right: 1.5em; /* Adjust padding for RTL checkboxes */
+            padding-left: 0;
+        }
+        #createEventModal .form-check-input {
+            margin-right: -1.5em; /* Adjust margin for RTL checkboxes */
+            margin-left: 0;
+        }
+        /* For Tagify input placeholder */
+        .tagify__input::placeholder {
+            text-align: right;
+        }
+        .tagify {
+            direction: rtl;
+            text-align: right;
+        }
+    </style>
     <link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.min.js"></script>
 {% endblock %}
@@ -34,9 +63,9 @@
         </div>
         <div class="d-flex align-items-center">
             <div class="me-3">
-                <label for="room-filter" class="form-label visually-hidden">Filter by Room:</label>
+                <label for="room-filter" class="form-label visually-hidden">فیلتر بر اساس اتاق:</label>
                 <select id="room-filter" class="form-select">
-                    <option value="">All Rooms</option>
+                    <option value="">همه اتاق‌ها</option>
                     {% for room in rooms %}
                         <option value="{{ room.id }}">{{ room.name }}</option>
                     {% endfor %}
@@ -55,7 +84,7 @@
             var calendarEl = document.getElementById('calendar');
             var tagify = new Tagify(document.getElementById('eventAttendees'), {
                 tagTextProp: 'name', // Use 'name' for display, 'value' (email) for data
-                placeholder: "Add emails and press Enter...",
+                placeholder: "ایمیل‌ها را اضافه کرده و Enter را فشار دهید...",
                 maxTags: 10, // Example: Limit to 10 attendees
                 dropdown: {
                     maxItems: 20,           // <- mixumum allowed rendered suggestions
@@ -130,7 +159,7 @@
             select: function(info) {
                 // Prevent creating events in month view
                 if (info.view.type === 'dayGridMonth') {
-                    alert("Please select a time slot in the week or day view to create a new reservation.");
+                    alert("لطفاً برای ایجاد رزرو جدید، یک بازه زمانی را در نمای هفته یا روز انتخاب کنید.");
                     calendar.unselect(); // Unselect the date range
                     return;
                 }
@@ -174,7 +203,7 @@
                         id: 'reservations', // Add an ID to reference this source
                         url: "{% url 'booking:reservation_api' %}", // Static URL
                         failure: function() {
-                            alert('there was an error while fetching reservations!');
+                            alert('خطایی در دریافت رزروها رخ داد!');
                         },
                     },
                     // Source 2: Iranian Holidays from Google Calendar
@@ -196,12 +225,12 @@
                     
                     // Allow editing only if the user is the organizer
                     if (props.organizer_username !== currentUser) {
-                        alert("You can only edit your own reservations.");
+                        alert("شما فقط می‌توانید رزروهای خود را ویرایش کنید.");
                         return;
                     }
 
                     // --- Pre-fill and open the modal for editing ---
-                    document.getElementById('createEventModalLabel').innerText = 'Edit Meeting'; // Change modal title
+                    document.getElementById('createEventModalLabel').innerText = 'ویرایش جلسه'; // Change modal title
                     document.getElementById('eventPk').value = props.pk; // Set the hidden event ID
                     document.getElementById('eventTitle').value = info.event.title;
                     // Populate Tagify with attendees
@@ -279,7 +308,7 @@
                             // If the server responds with an error, revert the event's position
                             info.revert();
                             return response.json().then(data => {
-                                alert('Error updating event: ' + (data.error || 'Unknown error'));
+                                alert('خطا در به‌روزرسانی رویداد: ' + (data.error || 'خطای ناشناخته'));
                             });
                         }
                         return response.json();
@@ -293,7 +322,7 @@
                     .catch(error => {
                         console.error('Error:', error);
                         info.revert();
-                        alert('A network error occurred while updating the event.');
+                        alert('خطای شبکه هنگام به‌روزرسانی رویداد رخ داد.');
                     });
                 },
 
@@ -302,16 +331,16 @@
                     var props = info.event.extendedProps;
                     var popoverContent = `
                         <ul class="list-unstyled mb-0">
-                            <li><strong class="me-2">Room:</strong>${props.room_name}</li>
-                            <li><strong class="me-2">Organizer:</strong>${props.organizer_username}</li>
-                            <li><strong class="me-2">IT Support:</strong>${props.it_support}</li>
+                            <li><strong class="me-2">اتاق:</strong>${props.room_name}</li>
+                            <li><strong class="me-2">برگزارکننده:</strong>${props.organizer_username}</li>
+                            <li><strong class="me-2">پشتیبانی IT:</strong>${props.it_support}</li>
                         `;
                     if (props.attendee_list && props.attendee_list.length > 0) {
                         var attendeeNames = props.attendee_list.map(att => att.name).join(', ');
-                        popoverContent += `<li><strong class="me-2">Attendees:</strong>${attendeeNames}</li>`;
+                        popoverContent += `<li><strong class="me-2">شرکت‌کنندگان:</strong>${attendeeNames}</li>`;
                     }
                     if (props.description) {
-                        popoverContent += `<li><strong class="me-2">Description:</strong>${props.description}</li>`;
+                        popoverContent += `<li><strong class="me-2">توضیحات:</strong>${props.description}</li>`;
                     }
                     popoverContent += `</ul>`;
 
@@ -344,7 +373,7 @@
 // START OF CHANGES - Step 3
             saveEventButton.addEventListener('click', function() {
                 if (!currentSelectionInfo) {
-                    alert('No time slot selected.');
+                    alert('بازه زمانی انتخاب نشده است.');
                     return;
                 }
 
@@ -355,7 +384,7 @@
                 var roomId = document.getElementById('eventRoom').value;
 
                 if (!title || !roomId) {
-                    alert('Title and Room are required fields.');
+                    alert('عنوان و اتاق فیلدهای الزامی هستند.');
                     return;
                 }
 
@@ -401,22 +430,22 @@
                         createEventModal.hide();
                         calendar.refetchEvents();
                     } else {
-                        alert('Error: ' + (result.body.error || 'Unknown server error'));
+                        alert('خطا: ' + (result.body.error || 'خطای ناشناخته سرور'));
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('A network error occurred.');
+                    alert('خطای شبکه رخ داد.');
                 });
             });
             document.getElementById('deleteEventButton').addEventListener('click', function() {
                 var eventPk = document.getElementById('eventPk').value;
                 if (!eventPk) {
-                    alert('Cannot delete an event without an ID.');
+                    alert('نمی‌توان رویدادی را بدون شناسه حذف کرد.');
                     return;
                 }
 
-                if (confirm('Are you sure you want to permanently delete this reservation?')) {
+                if (confirm('آیا از حذف دائمی این رزرو اطمینان دارید؟')) {
                     var url = `{% url 'booking:calendar_view' %}api/reservations/${eventPk}/delete/`;
                     var csrfToken = createEventModalEl.querySelector('input[name="csrfmiddlewaretoken"]').value;
 
@@ -431,7 +460,7 @@
                             return response.json();
                         } else {
                             // Try to get error message from backend
-                            return response.json().then(data => { throw new Error(data.error || 'Failed to delete.'); });
+                            return response.json().then(data => { throw new Error(data.error || 'حذف ناموفق بود.'); });
                         }
                     })
                     .then(result => {
@@ -441,7 +470,7 @@
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        alert('Error deleting reservation: ' + error.message);
+                        alert('خطا در حذف رزرو: ' + error.message);
                     });
                 }
             });
@@ -450,9 +479,9 @@
             // Unselect on modal close and reset state
             document.getElementById('createEventModal').addEventListener('hidden.bs.modal', function () {
                 document.getElementById('deleteEventButton').style.display = 'none'; // Hide delete button on close
-                document.getElementById('createEventModalLabel').innerText = 'New Meeting';
+                document.getElementById('createEventModalLabel').innerText = 'جلسه جدید';
                 // Reset the form to be ready for a "create" action next time
-                document.getElementById('createEventModalLabel').innerText = 'New Meeting';
+                document.getElementById('createEventModalLabel').innerText = 'جلسه جدید';
                 document.getElementById('eventPk').value = ''; // Clear the hidden ID
                 
                 // --- Reset IT Support field and hide its description ---
@@ -491,7 +520,7 @@
                     id: 'reservations',
                     url: newApiUrl,
                     failure: function() {
-                        alert('there was an error while fetching reservations!');
+                        alert('خطایی در دریافت رزروها رخ داد!');
                     },
                 });
             });
@@ -516,7 +545,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="createEventModalLabel">New Meeting</h5>
+                    <h5 class="modal-title" id="createEventModalLabel">جلسه جدید</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -526,46 +555,46 @@
                         <input type="hidden" id="eventPk">
                         <!-- END OF CHANGES - Step 4 -->
                         <div class="mb-3">
-                            <label for="eventTitle" class="form-label">Meeting Title</label>
+                            <label for="eventTitle" class="form-label">عنوان جلسه</label>
                             <input type="text" class="form-control" id="eventTitle" required>
                         </div>
 <!-- START OF CHANGES - Step 1 -->
                         <div class="mb-3">
-                            <label for="eventRoom" class="form-label">Room</label>
+                            <label for="eventRoom" class="form-label">اتاق</label>
                             <select class="form-select" id="eventRoom" required>
-                                <option value="" selected disabled>Select a room...</option>
+                                <option value="" selected disabled>یک اتاق را انتخاب کنید...</option>
                                 {% for room in rooms %}
                                     <option value="{{ room.id }}">{{ room.name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label for="eventAttendees" class="form-label">Attendees</label>
-                            <input type="text" class="form-control" id="eventAttendees" placeholder="Add emails and press Enter...">
+                            <label for="eventAttendees" class="form-label">شرکت‌کنندگان</label>
+                            <input type="text" class="form-control" id="eventAttendees" placeholder="ایمیل‌ها را اضافه کرده و Enter را فشار دهید...">
                         </div>
                         <!-- General Description (Always Visible) -->
                         <div class="mb-3">
-                            <label for="eventGeneralDescription" class="form-label">Description (Optional)</label>
+                            <label for="eventGeneralDescription" class="form-label">توضیحات کلی</label>
                             <textarea class="form-control" id="eventGeneralDescription" rows="2"></textarea>
                         </div>
 
                         <!-- IT Support Section -->
                         <div class="mb-3 form-check">
                             <input type="checkbox" class="form-check-input" id="eventITSupport">
-                            <label class="form-check-label" for="eventITSupport">IT Support Needed</label>
+                            <label class="form-check-label" for="eventITSupport">نیاز به پشتیبانی IT؟</label>
                         </div>
                         <!-- Conditional IT Support Description Box -->
                         <div class="mb-3" id="itSupportDetailsContainer" style="display: none;">
-                            <label for="eventITDescription" class="form-label">IT Support Requirements</label>
+                            <label for="eventITDescription" class="form-label">توضیحات پشتیبانی IT</label>
                             <textarea class="form-control" id="eventITDescription" rows="2" placeholder="e.g., Projector, specific software, etc."></textarea>
                         </div>
                     </form>
                 </div>
                 <!-- START OF CHANGES - Step 3 -->
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-danger me-auto" id="deleteEventButton" style="display: none;">Delete</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" id="saveEventButton">Save</button>
+                    <button type="button" class="btn btn-danger me-auto" id="deleteEventButton" style="display: none;">حذف</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">بستن</button>
+                    <button type="button" class="btn btn-primary" id="saveEventButton">ذخیره تغییرات</button>
                 </div>
                 <!-- END OF CHANGES - Step 3 -->
             </div>
