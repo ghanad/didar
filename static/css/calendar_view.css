@@ -1,0 +1,39 @@
+
+/* Optional: Add some spacing */
+.calendar-controls {
+    margin-bottom: 1.5rem;
+}
+/* Fix for RTL title display in FullCalendar */
+.fc-toolbar-title {
+    direction: rtl;
+    unicode-bidi: embed;
+    text-align: center; /* Ensures title remains centered */
+}
+
+#createEventModal .modal-header,
+#createEventModal .modal-body,
+#createEventModal .modal-footer {
+    direction: rtl;
+    text-align: right;
+}
+/* Adjust specific elements that might need left alignment within RTL context */
+#createEventModal .modal-header .btn-close {
+    margin-left: 0; /* Override default Bootstrap margin-left for close button */
+    margin-right: auto; /* Push close button to the left */
+}
+#createEventModal .form-check {
+    padding-right: 1.5em; /* Adjust padding for RTL checkboxes */
+    padding-left: 0;
+}
+#createEventModal .form-check-input {
+    margin-right: -1.5em; /* Adjust margin for RTL checkboxes */
+    margin-left: 0;
+}
+/* For Tagify input placeholder */
+.tagify__input::placeholder {
+    text-align: right;
+}
+.tagify {
+    direction: rtl;
+    text-align: right;
+}
