@@ -18,3 +18,5 @@ db.sqlite3
 codeBase.json
 task.md
 todo.md
+
+staticfiles/

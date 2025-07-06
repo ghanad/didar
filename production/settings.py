@@ -10,58 +10,22 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+# Quick-start development settings - unsuitable for production
+# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
+
+# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-8bk7u@6v4z^xn*yn@hx8aq4vwv6o&o*5le93%%m@3+k4r_sa6q'
 
-# Get the environment from the DJANGO_ENV variable. Default to 'development' if not set.
-DJANGO_ENV = os.environ.get('DJANGO_ENV', 'development')
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = False
 
-# --- Production Settings ---
-if DJANGO_ENV == 'production':
-
-    # SECURITY WARNING: don't run with debug turned on in production!
-    DEBUG = False
-
-    ALLOWED_HOSTS = ['didar.kolang2.ir']
-
-    # Database: Recommended to use PostgreSQL in production
-#    DATABASES = {
-#        'default': {
-#            'ENGINE': 'django.db.backends.postgresql',
-#            'NAME': 'didar_db',
-#            'USER': 'didar_user',
-#            'PASSWORD': 'db_password', # Should be loaded from an environment variable
-#            'HOST': 'localhost',
-#            'PORT': '5432',
-#        }
-#    }
-    # Database
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
-
-# --- Development Settings ---
-else:
-
-    # SECURITY WARNING: don't run with debug turned on in production!
-    DEBUG = True
-
-    ALLOWED_HOSTS = []
-
-    # Database
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+ALLOWED_HOSTS = ['didar.kolang2.ir']
 
 
 # Application definition
@@ -107,6 +71,17 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
+
+
+# Database
+# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
 
 
 # Password validation

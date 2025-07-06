@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Source 1: Our existing reservations API
             {
                 id: 'reservations', // Add an ID to reference this source
-                url: "/api/reservations/", // Static URL
+                url: calendarEl.dataset.eventsUrl, // Static URL
                 failure: function() {
                     alert('خطایی در دریافت رزروها رخ داد!');
                 },
@@ -430,7 +430,7 @@ var url = urlTemplate.replace('9999', event.extendedProps.pk);
         }
 
         // Construct the new URL for reservations
-        var newApiUrl = "{% url 'booking:reservation_api' %}";
+        var newApiUrl = calendarEl.dataset.eventsUrl;
         if (roomId) {
             newApiUrl += '?room_id=' + roomId;
         }

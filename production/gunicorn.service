@@ -1,0 +1,17 @@
+[Unit]
+Description=gunicorn daemon
+Requires=gunicorn.socket
+After=network.target
+
+[Service]
+User=root
+Group=www-data
+WorkingDirectory=/opt/didar
+ExecStart=/opt/didar/venv/bin/gunicorn --workers 3 --bind unix:/run/gunicorn.sock config.wsgi:application
+Environment="DJANGO_ENV=production"
+
+
+
+[Install]
+WantedBy=multi-user.target
+
