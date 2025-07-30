@@ -7,7 +7,7 @@ Backend: Python 3.10+ with Django 4.x
 Database:
 Development (MVP): SQLite (Default with Django, zero setup required)
 Production: PostgreSQL (Recommended for future deployment)
-Frontend (MVP): Plain HTML, CSS, and minimal JavaScript, styled with Bootstrap 5 for a clean, responsive UI without the complexity of a JS framework.
+Frontend (MVP): Plain HTML, CSS, and minimal JavaScript, styled with the Bootswatch **Materia** theme to provide a Material Design look without the complexity of a JS framework.
 Key Libraries:
 django-auth-ldap: For Active Directory integration (Post-MVP core).
 Pillow: For any potential image/file uploads.
