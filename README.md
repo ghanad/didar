@@ -95,3 +95,14 @@ python manage.py runserver
 
 # 7. Access the application at http://127.0.0.1:8000
 #    Access the admin panel at http://127.0.0.1:8000/admin
+
+## Reservation Managers
+
+To allow certain users to edit or cancel any reservation, add their usernames to
+`BOOKING_MANAGERS` in `config/settings.py`. Example:
+
+```python
+BOOKING_MANAGERS = ["alice", "bob"]
+```
+
+These users will be able to update or delete bookings created by others.

@@ -13,6 +13,7 @@ import json
 import logging
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
+from .utils import is_booking_manager
 
 logger = logging.getLogger(__name__)
 
@@ -189,8 +190,8 @@ def reservation_update_api(request, pk):
     try:
         reservation = get_object_or_404(Reservation, pk=pk)
 
-        # Security Check: Ensure the user owns this reservation
-        if reservation.organizer != request.user:
+        # Security Check: Ensure the user owns this reservation or is a manager
+        if reservation.organizer != request.user and not is_booking_manager(request.user):
             return JsonResponse({'error': 'You do not have permission to edit this reservation.'}, status=403)
 
         data = json.loads(request.body)
@@ -254,8 +255,8 @@ def reservation_delete_api(request, pk):
     try:
         reservation = get_object_or_404(Reservation, pk=pk)
 
-        # Security Check: User must be the organizer to delete
-        if reservation.organizer != request.user:
+        # Security Check: User must be the organizer or a manager to delete
+        if reservation.organizer != request.user and not is_booking_manager(request.user):
             return JsonResponse({'error': 'You do not have permission to delete this reservation.'}, status=403)
 
         reservation.delete()
@@ -296,7 +297,7 @@ def reservation_drag_update_api(request, pk):
     try:
         reservation = get_object_or_404(Reservation, pk=pk)
 
-        if reservation.organizer != request.user:
+        if reservation.organizer != request.user and not is_booking_manager(request.user):
             return JsonResponse({'error': 'You do not have permission to edit this reservation.'}, status=403)
 
         data = json.loads(request.body)
