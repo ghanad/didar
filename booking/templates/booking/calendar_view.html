@@ -16,29 +16,34 @@
 {% endblock %}
 
 {% block content %}
-    
-    <!-- Header Section for Title and Controls -->
-    <div class="d-flex justify-content-between align-items-center calendar-controls">
-        <div>
-            <h1 class="h2">سامانه دیدار</h1>
-        </div>
-        <div class="d-flex align-items-center">
-            <div class="me-3">
-                <label for="room-filter" class="form-label visually-hidden">فیلتر بر اساس اتاق:</label>
-                <select id="room-filter" class="form-select">
-                    <option value="">همه اتاق‌ها</option>
-                    {% for room in rooms %}
-                        <option value="{{ room.id }}">{{ room.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div>
+<div class="container">
+    <div class="calendar-header">
+        <span class="calendar-title">سامانه دیدار</span>
+        <div style="display:flex; align-items:center;">
+            <select class="calendar-filter" id="room-filter">
+                <option value="">همه اتاق‌ها</option>
+                {% for room in rooms %}
+                    <option value="{{ room.id }}">{{ room.name }}</option>
+                {% endfor %}
+            </select>
+            <div class="user-menu">
+                <span>سلام، {{ user.username }}</span>
+                <span class="user-avatar">{{ user.username|first|default:'U' }}</span>
             </div>
         </div>
     </div>
-    
-    <!-- Calendar Display Area -->
+    <div class="actions">
+        <button class="soft-btn primary" id="openCreateEvent">رزرو جلسه جدید</button>
+        <button class="soft-btn" id="calendarToday">امروز</button>
+        <button class="soft-btn" id="calendarPrev">قبلی</button>
+        <button class="soft-btn" id="calendarNext">بعدی</button>
+        <button class="soft-btn" onclick="window.fcCalendar.changeView('dayGridMonth');">ماه</button>
+        <button class="soft-btn" onclick="window.fcCalendar.changeView('timeGridWeek');">هفته</button>
+        <button class="soft-btn" onclick="window.fcCalendar.changeView('timeGridDay');">روز</button>
+    </div>
+
     <div id='calendar' data-events-url="{% url 'booking:reservation_api' %}" data-business-hours-start="{{ business_hours_start }}" data-business-hours-end="{{ business_hours_end }}"></div>
+</div>
 
     <script src="{% static 'js/calendar_view.js' %}?v=1.2"></script>
 

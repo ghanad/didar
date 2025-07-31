@@ -288,6 +288,7 @@ var url = urlTemplate.replace('9999', event.extendedProps.pk);
         expandRows: true
     });
     calendar.render();
+    window.fcCalendar = calendar;
 
     // Event listener for the Save button, defined only once
 // START OF CHANGES - Step 3
@@ -456,5 +457,20 @@ var url = urlTemplate.replace('9999', event.extendedProps.pk);
             document.getElementById('eventITDescription').value = ''; // Clear IT description if unchecked
         }
     });
+
+    // Custom navigation buttons
+    var openBtn = document.getElementById('openCreateEvent');
+    if (openBtn) {
+        openBtn.addEventListener('click', function() {
+            var modal = new bootstrap.Modal(document.getElementById('createEventModal'));
+            modal.show();
+        });
+    }
+    var prevBtn = document.getElementById('calendarPrev');
+    var nextBtn = document.getElementById('calendarNext');
+    var todayBtn = document.getElementById('calendarToday');
+    if (prevBtn) prevBtn.addEventListener('click', function(){ window.fcCalendar.prev(); });
+    if (nextBtn) nextBtn.addEventListener('click', function(){ window.fcCalendar.next(); });
+    if (todayBtn) todayBtn.addEventListener('click', function(){ window.fcCalendar.today(); });
     // --- END OF CHANGES - Step 2 ---
 });
