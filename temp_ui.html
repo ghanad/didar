@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>سامانه دیدار - کلندر ساده</title>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #ff6300;
+      --secondary: #2563eb;
+      --bg: #f9fafb;
+      --table-border: #e5e7eb;
+      --event-blue: #e3edfd;
+      --event-blue-border: #a3bffa;
+      --event-orange: #fff4ed;
+      --event-orange-border: #feb47b;
+      --event-green: #e8faed;
+      --event-green-border: #5eead4;
+      --gray: #64748b;
+      --gray2: #e5e7eb;
+      --danger: #ef4444;
+      --radius: 6px;
+    }
+    body {
+      font-family: 'Vazirmatn', sans-serif;
+      background: var(--bg);
+      margin: 0;
+      padding: 0;
+      color: #222;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 36px auto;
+      background: #fff;
+      border-radius: var(--radius);
+      border: 1.3px solid var(--table-border);
+      box-shadow: 0 2px 16px 0 rgba(30,41,59,.03);
+      padding: 30px 26px;
+      min-height: 80vh;
+    }
+    button, input, select, textarea {
+      font-family: 'Vazirmatn', sans-serif;
+    }
+
+    .calendar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 22px;
+    }
+    .calendar-title {
+      font-size: 1.3rem;
+      font-weight: 500;
+      color: #1e293b;
+      letter-spacing: 0;
+    }
+    .actions {
+      display: flex;
+      gap: 9px;
+      margin-bottom: 12px;
+    }
+    .soft-btn {
+      background: transparent;
+      color: var(--secondary);
+      border: 1.3px solid var(--table-border);
+      border-radius: var(--radius);
+      padding: 7px 20px;
+      font-size: 1rem;
+      font-weight: 400;
+      cursor: pointer;
+      transition: all 0.16s;
+      outline: none;
+    }
+    .soft-btn.primary {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      font-weight: 500;
+    }
+    .soft-btn.primary:hover,
+    .soft-btn.primary:focus {
+      background: #ff7a1a;
+      color: #fff;
+      border: none;
+    }
+    .soft-btn:hover,
+    .soft-btn:focus {
+      background: #f3f5fa;
+      border-color: var(--secondary);
+      color: var(--secondary);
+    }
+    .calendar-filter {
+      min-width: 140px;
+      padding: 7px 12px;
+      border-radius: var(--radius);
+      border: 1.3px solid var(--table-border);
+      background: #fff;
+      font-size: 0.97rem;
+      color: var(--gray);
+      margin-left: 9px;
+      outline: none;
+      transition: border-color 0.2s;
+      font-weight: 400;
+    }
+    .calendar-filter:focus {
+      border-color: var(--secondary);
+      background: #f4f8fc;
+    }
+    .user-menu {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: transparent;
+      border-radius: var(--radius);
+      padding: 4px 13px 4px 7px;
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--gray);
+    }
+    .user-avatar {
+      background: #f3f5f9;
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--secondary);
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin-right: 4px;
+      border: 1.3px solid #e5e7eb;
+    }
+    .calendar-table {
+      width: 100%;
+      border-spacing: 0;
+      margin-top: 16px;
+      background: #fff;
+      border-radius: var(--radius);
+      border: 1.3px solid var(--table-border);
+      overflow: hidden;
+    }
+    .calendar-table th, .calendar-table td {
+      padding: 11px 6px;
+      text-align: center;
+      border-bottom: 1.1px solid var(--table-border);
+      border-right: 1.1px solid var(--table-border);
+      min-width: 100px;
+      font-size: 0.99rem;
+      font-weight: 400;
+    }
+    .calendar-table th {
+      background: #fafbfc;
+      color: #334155;
+      font-weight: 500;
+      border-top: 1.1px solid var(--table-border);
+      letter-spacing: 0.1px;
+    }
+    .calendar-table td {
+      background: #fff;
+      position: relative;
+      border-radius: 0;
+    }
+    .calendar-table tr:last-child td {
+      border-bottom: none;
+    }
+    .calendar-table td.selected {
+      background: #f0f6fe;
+    }
+    .event-card {
+      background: var(--event-orange);
+      color: #cf5f17;
+      border: 1.5px solid var(--event-orange-border);
+      border-radius: var(--radius);
+      padding: 6px 10px 5px 10px;
+      margin: 2px 0;
+      font-size: 0.99rem;
+      font-weight: 400;
+      box-shadow: none;
+      display: inline-block;
+      min-width: 88px;
+      text-align: right;
+      letter-spacing: 0.2px;
+      line-height: 1.6;
+      transition: border-color 0.15s;
+    }
+    .event-card.blue {
+      background: var(--event-blue);
+      color: #204b95;
+      border-color: var(--event-blue-border);
+    }
+    .event-card.green {
+      background: var(--event-green);
+      color: #27794b;
+      border-color: var(--event-green-border);
+    }
+    .event-card:hover {
+      border-color: var(--secondary);
+      background: #e3edfd;
+      color: #204b95;
+    }
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0; right: 0; bottom: 0; left: 0;
+      background: rgba(33, 39, 57, 0.09);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+    .soft-modal {
+      background: #fff;
+      border-radius: var(--radius);
+      padding: 28px 20px 14px 20px;
+      max-width: 420px;
+      width: 98%;
+      border: 1.3px solid var(--table-border);
+      box-shadow: 0 6px 32px 0 rgba(30,41,59,.08);
+      position: relative;
+      text-align: right;
+      animation: fadein 0.24s;
+    }
+    @keyframes fadein {
+      0% { transform: translateY(-24px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+    .modal-close {
+      position: absolute;
+      top: 16px; left: 16px;
+      font-size: 1.6rem;
+      background: transparent;
+      border: none;
+      color: var(--gray);
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .modal-close:hover { color: var(--danger);}
+    .soft-label {
+      font-size: 0.97rem;
+      color: var(--secondary);
+      margin-bottom: 5px;
+      display: block;
+      font-weight: 400;
+    }
+    .soft-input, .soft-select, .soft-textarea {
+      width: 100%;
+      padding: 10px;
+      font-size: 1.04rem;
+      border: 1.3px solid var(--table-border);
+      border-radius: var(--radius);
+      margin-bottom: 17px;
+      background: #f9fafb;
+      color: #333;
+      font-weight: 400;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .soft-input:focus, .soft-select:focus, .soft-textarea:focus {
+      border-color: var(--secondary);
+      background: #f1f5f9;
+      outline: none;
+    }
+    .soft-checkbox {
+      accent-color: var(--primary);
+      margin-left: 6px;
+      transform: scale(1.12);
+    }
+    .soft-modal-actions {
+      display: flex;
+      justify-content: flex-start;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .soft-btn.outline {
+      background: #fff;
+      color: var(--secondary);
+      border: 1.3px solid var(--secondary);
+      box-shadow: none;
+    }
+    .soft-btn.outline:hover {
+      background: #f1f5f9;
+      color: var(--secondary);
+    }
+    @media (max-width: 700px) {
+      .container { padding: 8px 2px; }
+      .calendar-header { flex-direction: column; gap: 13px;}
+      .calendar-title { font-size: 1rem;}
+      .calendar-table th, .calendar-table td { min-width: 54px; font-size: 0.88rem;}
+      .soft-modal { padding: 12px 2px 7px 2px;}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="calendar-header">
+      <span class="calendar-title">سامانه دیدار</span>
+      <div style="display:flex; align-items:center;">
+        <select class="calendar-filter">
+          <option>همه اتاق‌ها</option>
+          <option>اتاق جلسه طبقه ۱</option>
+          <option>اتاق جلسه طبقه ۲</option>
+        </select>
+        <div class="user-menu">
+          <span>سلام، ادمین</span>
+          <span class="user-avatar">A</span>
+        </div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="soft-btn primary" onclick="showModal()">رزرو جلسه جدید</button>
+      <button class="soft-btn">امروز</button>
+      <button class="soft-btn">قبلی</button>
+      <button class="soft-btn">بعدی</button>
+      <button class="soft-btn">ماه</button>
+      <button class="soft-btn">هفته</button>
+      <button class="soft-btn">روز</button>
+    </div>
+    <table class="calendar-table">
+      <tr>
+        <th>شنبه ۵/۴</th>
+        <th>یکشنبه ۵/۵</th>
+        <th>دوشنبه ۵/۶</th>
+        <th>سه‌شنبه ۵/۷</th>
+        <th>چهارشنبه ۵/۸</th>
+        <th>پنجشنبه ۵/۹</th>
+        <th>جمعه ۵/۱۰</th>
+      </tr>
+      <!-- ساعت‌های تقویم -->
+      <tr>
+        <td></td>
+        <td><span class="event-card blue">۱۱:۰۰ - ۱۲:۰۰<br>جلسه آبی</span></td>
+        <td></td>
+        <td><span class="event-card orange">۱۱:۰۰ - ۱۲:۰۰<br>گردهمایی</span></td>
+        <td><span class="event-card green">۱۱:۰۰ - ۱۲:۰۰<br>جلسه سبز</span></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <!-- سایر سطرها به همین شکل -->
+    </table>
+  </div>
+  <!-- فرم رزرو جلسه (Modal) -->
+  <div class="modal-overlay" id="meetingModal" style="display: none;">
+    <div class="soft-modal">
+      <button class="modal-close" onclick="hideModal()">&times;</button>
+      <h3 style="margin-top: 0; color: var(--secondary); font-weight: 500;">جلسه جدید</h3>
+      <label class="soft-label" for="title">عنوان جلسه</label>
+      <input class="soft-input" id="title" placeholder="مثلاً جلسه هفتگی تیم فنی">
+
+      <label class="soft-label" for="room">اتاق</label>
+      <select class="soft-select" id="room">
+        <option>یک اتاق را انتخاب کنید...</option>
+        <option>اتاق جلسه طبقه ۱</option>
+        <option>اتاق جلسه طبقه ۲</option>
+      </select>
+
+      <label class="soft-label" for="emails">شرکت‌کنندگان</label>
+      <input class="soft-input" id="emails" placeholder="ایمیل‌ها را اضافه کنید…">
+
+      <label class="soft-label" for="desc">توضیحات کلی</label>
+      <textarea class="soft-textarea" id="desc" rows="2" placeholder="توضیح جلسه…"></textarea>
+
+      <div>
+        <input type="checkbox" class="soft-checkbox" id="it-support">
+        <label for="it-support" style="font-weight:400; color:var(--gray)">نیاز به پشتیبانی IT؟</label>
+      </div>
+
+      <div class="soft-modal-actions">
+        <button class="soft-btn primary" style="min-width: 110px;">ذخیره تغییرات</button>
+        <button class="soft-btn outline" onclick="hideModal()">بستن</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    function showModal() {
+      document.getElementById("meetingModal").style.display = "flex";
+    }
+    function hideModal() {
+      document.getElementById("meetingModal").style.display = "none";
+    }
+  </script>
+</body>
+</html>
