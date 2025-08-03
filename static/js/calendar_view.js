@@ -252,17 +252,17 @@ var url = urlTemplate.replace('9999', event.extendedProps.pk);
             // Prepare the content for the popover
             var props = info.event.extendedProps;
             var popoverContent = `
-                <ul class="list-unstyled mb-0">
-                    <li><strong class="me-2">اتاق:</strong>${props.room_name}</li>
-                    <li><strong class="me-2">برگزارکننده:</strong>${props.organizer_username}</li>
-                    <li><strong class="me-2">پشتیبانی IT:</strong>${props.it_support}</li>
+                <ul class="list-unstyled mb-0 rtl-popover">
+                    <li><strong>اتاق:</strong>${props.room_name}</li>
+                    <li><strong>برگزارکننده:</strong>${props.organizer_username}</li>
+                    <li><strong>پشتیبانی IT:</strong><span style="direction: ltr; unicode-bidi: isolate;">${props.it_support}</span></li>
                 `;
             if (props.attendee_list && props.attendee_list.length > 0) {
                 var attendeeNames = props.attendee_list.map(att => att.name).join(', ');
-                popoverContent += `<li><strong class="me-2">شرکت‌کنندگان:</strong>${attendeeNames}</li>`;
+                popoverContent += `<li><strong>شرکت‌کنندگان:</strong>${attendeeNames}</li>`;
             }
             if (props.description) {
-                popoverContent += `<li><strong class="me-2">توضیحات:</strong>${props.description}</li>`;
+                popoverContent += `<li><strong>توضیحات:</strong>${props.description}</li>`;
             }
             popoverContent += `</ul>`;
 

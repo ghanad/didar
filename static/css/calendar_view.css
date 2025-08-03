@@ -37,3 +37,20 @@
     direction: rtl;
     text-align: right;
 }
+
+/* RTL for event popover content */
+.rtl-popover {
+    direction: rtl;
+    text-align: right;
+    padding-right: 0; /* Remove default padding on ul */
+}
+
+.rtl-popover li {
+    padding-right: 0; /* Remove default padding on li */
+    padding-left: 0; /* Ensure no left padding either */
+}
+
+.rtl-popover li strong {
+    margin-left: 0.5rem; /* Add a small margin to the left of the strong tag for spacing */
+    margin-right: 0;
+}
