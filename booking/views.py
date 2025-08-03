@@ -25,6 +25,7 @@ class CalendarView(LoginRequiredMixin, TemplateView):
         context['rooms'] = Room.objects.filter(is_active=True)
         context['business_hours_start'] = settings.BUSINESS_HOURS_START
         context['business_hours_end'] = settings.BUSINESS_HOURS_END
+        context['is_manager'] = is_booking_manager(self.request.user) # Pass manager status to template
         return context
 
 def reservation_api(request):
@@ -41,6 +42,28 @@ def reservation_api(request):
     events = []
 
     for reservation in reservations:
+        # Determine if the current user is the organizer or a manager
+        is_organizer_or_manager = (reservation.organizer == request.user) or is_booking_manager(request.user)
+
+        # Prepare extendedProps, redacting sensitive info if not authorized
+        extended_props = {
+            'pk': reservation.pk,
+        }
+
+        if is_organizer_or_manager:
+            extended_props['organizer_username'] = reservation.organizer.username
+            extended_props['room_name'] = reservation.room.name
+            extended_props['it_support'] = 'Yes' if reservation.it_support_needed else 'No'
+            extended_props['description'] = reservation.description
+            extended_props['attendee_list'] = [{'name': attendee.user.get_full_name() if attendee.user else attendee.email, 'value': attendee.email} for attendee in reservation.attendees.all()]
+        else:
+            # Redact all sensitive information for unauthorized users
+            extended_props['organizer_username'] = 'کاربر دیگر' # Other User
+            extended_props['room_name'] = 'اتاق خصوصی' # Private Room
+            extended_props['it_support'] = 'نامشخص' # Unknown
+            extended_props['description'] = 'اطلاعات خصوصی' # Private Information
+            extended_props['attendee_list'] = [] # Empty list
+
         if reservation.recurrence_rule:
             if not reservation.start_time:
                 continue
@@ -61,14 +84,7 @@ def reservation_api(request):
                     'url': reverse('booking:reservation_detail', args=[reservation.pk]),
                     'allDay': False,
                     'color': reservation.room.color,
-                    'extendedProps': {
-                        'pk': reservation.pk, # Add this
-                        'organizer_username': reservation.organizer.username, # Rename for clarity
-                        'room_name': reservation.room.name,
-                        'description': reservation.description,
-                        'it_support': 'Yes' if reservation.it_support_needed else 'No',
-                        'attendee_list': [{'name': attendee.user.get_full_name() if attendee.user else attendee.email, 'value': attendee.email} for attendee in reservation.attendees.all()]
-                    }
+                    'extendedProps': extended_props # Use the prepared extended_props
                 })
         else:
             if reservation.start_time and reservation.end_time:
@@ -78,14 +94,7 @@ def reservation_api(request):
                     'end': reservation.end_time.isoformat(),
                     'allDay': False,
                     'color': reservation.room.color,
-                    'extendedProps': {
-                        'pk': reservation.pk, # Add this
-                        'organizer_username': reservation.organizer.username, # Rename for clarity
-                        'room_name': reservation.room.name,
-                        'description': reservation.description,
-                        'it_support': 'Yes' if reservation.it_support_needed else 'No',
-                        'attendee_list': [{'name': attendee.user.get_full_name() if attendee.user else attendee.email, 'value': attendee.email} for attendee in reservation.attendees.all()]
-                    }
+                    'extendedProps': extended_props # Use the prepared extended_props
                 })
     return JsonResponse(events, safe=False)
 
@@ -192,7 +201,7 @@ def reservation_update_api(request, pk):
 
         # Security Check: Ensure the user owns this reservation or is a manager
         if reservation.organizer != request.user and not is_booking_manager(request.user):
-            return JsonResponse({'error': 'You do not have permission to edit this reservation.'}, status=403)
+            return JsonResponse({'error': 'شما فقط می‌توانید رزروهای خود را ویرایش کنید.'}, status=403)
 
         data = json.loads(request.body)
         
@@ -298,7 +307,7 @@ def reservation_drag_update_api(request, pk):
         reservation = get_object_or_404(Reservation, pk=pk)
 
         if reservation.organizer != request.user and not is_booking_manager(request.user):
-            return JsonResponse({'error': 'You do not have permission to edit this reservation.'}, status=403)
+            return JsonResponse({'error': 'شما فقط می‌توانید رزروهای خود را ویرایش کنید.'}, status=403)
 
         data = json.loads(request.body)
         start_str = data.get('start')

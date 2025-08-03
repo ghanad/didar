@@ -142,12 +142,14 @@ document.addEventListener('DOMContentLoaded', function() {
             // In a real app, you would get the current user's username from the template.
             // For this example, let's assume it's available via a template variable.
             var currentUser = "{{ request.user.username }}";
+            var isManager = calendarEl.dataset.isManager === 'true'; // Get manager status from data attribute
             
-            // Allow editing only if the user is the organizer
-            if (props.organizer_username !== currentUser) {
-                alert("شما فقط می‌توانید رزروهای خود را ویرایش کنید.");
-                return;
-            }
+            // Allow editing if the user is the organizer OR a manager
+            // if (props.organizer_username !== currentUser && !isManager) {
+            //     // alert(organizer_username);
+            //     alert("شما فقط می‌توانید رزروهای خود را ویرایش کنید.");
+            //     return;
+            // }
 
             // --- Pre-fill and open the modal for editing ---
             document.getElementById('createEventModalLabel').innerText = 'ویرایش جلسه'; // Change modal title

@@ -162,7 +162,7 @@ BUSINESS_HOURS_START = '08:00:00'
 BUSINESS_HOURS_END = '20:00:00'
 
 # Usernames allowed to manage all reservations
-BOOKING_MANAGERS = []
+BOOKING_MANAGERS = ['admin']
 
 # Exclude venv from the development server's file watcher
 RUNSERVER_PLUS_EXCLUDE_DIRS = [
