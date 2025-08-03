@@ -4,10 +4,10 @@ from recurrence.fields import RecurrenceField
 from datetime import timedelta
 
 class Room(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    capacity = models.PositiveIntegerField()
-    is_active = models.BooleanField(default=True)
-    color = models.CharField(max_length=7, default='#808080', help_text='Enter hex color code, e.g., #FF5733')
+    name = models.CharField(max_length=100, unique=True, verbose_name="نام")
+    capacity = models.PositiveIntegerField(verbose_name="ظرفیت")
+    is_active = models.BooleanField(default=True, verbose_name="فعال")
+    color = models.CharField(max_length=7, default='#808080', help_text='کد رنگ هگزادسیمال را وارد کنید، مثال: #FF5733', verbose_name="رنگ")
 
     def __str__(self):
         return self.name
