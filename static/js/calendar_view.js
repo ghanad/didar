@@ -75,6 +75,7 @@ document.addEventListener('DOMContentLoaded', function() {
         selectable: true, // Enable selection
         selectMirror: true, // Show a mirror image of the selected area
         editable: true, // Enable dragging and resizing
+        allDaySlot: false, // Disable the "all-day" row
 // START OF CHANGES - Step 2
     select: function(info) {
         // Prevent creating events in month view
