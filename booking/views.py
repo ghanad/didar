@@ -5,7 +5,7 @@ from django.db.models import Q
 from .models import Reservation, Room, Attendee
 from django.contrib.auth.models import User
 from django.utils import timezone
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseForbidden
 from django.urls import reverse
 from django.utils.dateparse import parse_datetime
 from datetime import datetime, timedelta
@@ -13,9 +13,42 @@ import json
 import logging
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect, get_object_or_404
+from .forms import RoomForm
 from .utils import is_booking_manager
 
 logger = logging.getLogger(__name__)
+
+
+@login_required
+def manage_rooms(request):
+    """View for managers to create, update, deactivate and delete rooms."""
+
+    if not is_booking_manager(request.user):
+        return HttpResponseForbidden("You are not authorized to manage rooms.")
+
+    rooms = Room.objects.all()
+
+    if request.method == "POST":
+        if "create_room" in request.POST:
+            form = RoomForm(request.POST)
+            if form.is_valid():
+                form.save()
+                return redirect("booking:manage_rooms")
+        elif "update_room" in request.POST:
+            room = get_object_or_404(Room, id=request.POST.get("room_id"))
+            form = RoomForm(request.POST, instance=room)
+            if form.is_valid():
+                form.save()
+                return redirect("booking:manage_rooms")
+        elif "delete_room" in request.POST:
+            room = get_object_or_404(Room, id=request.POST.get("room_id"))
+            room.delete()
+            return redirect("booking:manage_rooms")
+
+    create_form = RoomForm()
+    context = {"rooms": rooms, "create_form": create_form}
+    return render(request, "booking/manage_rooms.html", context)
 
 class CalendarView(LoginRequiredMixin, TemplateView):
     template_name = 'booking/calendar_view.html'
@@ -191,7 +224,6 @@ def reservation_quick_create_api(request):
 
 
 from django.views.decorators.http import require_http_methods
-from django.shortcuts import get_object_or_404
 
 @require_http_methods(["PUT"]) # This view only accepts PUT requests
 @login_required

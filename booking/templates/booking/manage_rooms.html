@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}Manage Rooms{% endblock %}
+
+{% block content %}
+<h2>مدیریت اتاق‌ها</h2>
+
+<div class="card mt-4">
+    <div class="card-header">
+        <h4>افزودن اتاق جدید</h4>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        {{ create_form.name.label_tag }}
+                        {{ create_form.name }}
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group">
+                        {{ create_form.capacity.label_tag }}
+                        {{ create_form.capacity }}
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group">
+                        {{ create_form.color.label_tag }}
+                        {{ create_form.color }}
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group form-check mb-0">
+                        {{ create_form.is_active }}
+                        {{ create_form.is_active.label_tag }}
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" name="create_room" class="btn btn-primary w-100">افزودن اتاق</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<h4 class="mt-4">اتاق‌های موجود</h4>
+{% for room in rooms %}
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="room_id" value="{{ room.id }}">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="room-name-{{ room.id }}">نام</label>
+                        <input type="text" name="name" value="{{ room.name }}" class="form-control" id="room-name-{{ room.id }}">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label for="room-capacity-{{ room.id }}">ظرفیت</label>
+                        <input type="number" name="capacity" value="{{ room.capacity }}" class="form-control" id="room-capacity-{{ room.id }}">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label for="room-color-{{ room.id }}">رنگ</label>
+                        <input type="color" name="color" value="{{ room.color }}" class="form-control form-control-color" id="room-color-{{ room.id }}">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group form-check mb-0">
+                        <input type="checkbox" name="is_active" class="form-check-input" id="room-active-{{ room.id }}" {% if room.is_active %}checked{% endif %}>
+                        <label class="form-check-label" for="room-active-{{ room.id }}">فعال</label>
+                    </div>
+                </div>
+                <div class="col-md-3 text-end">
+                    <button type="submit" name="update_room" class="btn btn-success btn-sm me-2">به‌روزرسانی</button>
+                    <button type="submit" name="delete_room" class="btn btn-danger btn-sm" onclick="return confirm('آیا از حذف این اتاق اطمینان دارید؟');">حذف</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% empty %}
+<p class="alert alert-info">اتاقی موجود نیست.</p>
+{% endfor %}
+{% endblock %}
+

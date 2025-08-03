@@ -4,9 +4,10 @@ from .views import (
     CalendarView, 
     reservation_quick_create_api, 
     reservation_update_api, 
-    reservation_delete_api, 
+    reservation_delete_api,
     user_search_api,
     reservation_drag_update_api,  # Import the new view
+    manage_rooms,
 )
 
 app_name = 'booking'
@@ -14,6 +15,7 @@ app_name = 'booking'
 urlpatterns = [
     # The calendar is now the main view
     path('', CalendarView.as_view(), name='calendar_view'),
+    path('rooms/manage/', manage_rooms, name='manage_rooms'),
     
     # API Endpoints
     path('api/reservations/', reservation_api, name='reservation_api'),

@@ -1,4 +1,4 @@
-{% load static %}
+{% load static booking_tags %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,13 +22,18 @@
             </a>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
                 {% if user.is_authenticated %}
-                    <li><span class="dropdown-item-text">Hello, {{ user.username }}</span></li>
+                    <li><span class="dropdown-item-text">سلام، {{ user.username }}</span></li>
+                    <li><a class="dropdown-item" href="{% url 'booking:calendar_view' %}">خانه</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                {% endif %}
+                {% if user|is_booking_manager %}
+                    <li><a class="dropdown-item" href="{% url 'booking:manage_rooms' %}">مدیریت اتاق‌ها</a></li>
                     <li><hr class="dropdown-divider"></li>
                 {% endif %}
                 <li>
                     <form action="{% url 'users:logout' %}" method="post" class="d-inline">
                         {% csrf_token %}
-                        <button type="submit" class="dropdown-item">Logout</button>
+                        <button type="submit" class="dropdown-item">خروج</button>
                     </form>
                 </li>
             </ul>
