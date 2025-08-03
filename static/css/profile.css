@@ -1,11 +1,60 @@
-.profile-dropdown-container {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 1000;
+.profile-menu-container {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 1000;
 }
-
+.menu-button {
+  display: flex;
+  align-items: center;
+  background-color: #e5e7eb;
+  padding: 4px 8px;
+  border-radius: 9999px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border: none;
+}
+.menu-button .hamburger {
+  margin-left: 6px;
+}
+.menu-button .avatar {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: #d1d5db;
+}
+.menu-button .avatar svg {
+  width: 16px;
+  height: 16px;
+}
 .dropdown-menu {
-    direction: rtl;
-    text-align: right;
+  display: none;
+  margin-top: 6px;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+  width: 160px;
+  font-size: 14px;
+  direction: rtl; /* Added for RTL support */
+  text-align: right; /* Added for RTL support */
+  position: absolute; /* Added for positioning */
+  right: 0; /* Added to align to the right */
+}
+.dropdown-menu a {
+  display: block;
+  padding: 10px 12px;
+  text-decoration: none;
+  color: #333;
+  border-bottom: 1px solid #eee;
+}
+.dropdown-menu a:last-child {
+  border-bottom: none;
+  color: crimson;
+}
+.dropdown-menu a:hover {
+  background-color: #f3f4f6;
 }
