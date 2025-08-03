@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var calendarEl = document.getElementById('calendar');
     var businessHoursStart = calendarEl.dataset.businessHoursStart;
     var businessHoursEnd = calendarEl.dataset.businessHoursEnd;
+    var currentUser = calendarEl.dataset.currentUser;
     var tagify = new Tagify(document.getElementById('eventAttendees'), {
         tagTextProp: 'name', // Use 'name' for display, 'value' (email) for data
         placeholder: "ایمیل‌ها را اضافه کرده و Enter را فشار دهید...",
@@ -139,10 +140,6 @@ document.addEventListener('DOMContentLoaded', function() {
             info.jsEvent.preventDefault(); // Always prevent default navigation
 
             var props = info.event.extendedProps;
-            // In a real app, you would get the current user's username from the template.
-            // For this example, let's assume it's available via a template variable.
-            var currentUser = "{{ request.user.username }}";
-            
             // Allow editing only if the user is the organizer
             if (props.organizer_username !== currentUser) {
                 alert("شما فقط می‌توانید رزروهای خود را ویرایش کنید.");
