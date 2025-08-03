@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Manage Rooms{% endblock %}
+
+{% block content %}
+<h2>Manage Rooms</h2>
+
+<h4 class="mt-4">Add New Room</h4>
+<form method="post" class="mb-4">
+    {% csrf_token %}
+    <div class="row g-2 align-items-end">
+        <div class="col-md-4">{{ create_form.name.label_tag }}{{ create_form.name }}</div>
+        <div class="col-md-2">{{ create_form.capacity.label_tag }}{{ create_form.capacity }}</div>
+        <div class="col-md-2">{{ create_form.color.label_tag }}{{ create_form.color }}</div>
+        <div class="col-md-2">{{ create_form.is_active.label_tag }}{{ create_form.is_active }}</div>
+        <div class="col-md-2"><button type="submit" name="create_room" class="btn btn-primary">Add</button></div>
+    </div>
+</form>
+
+<h4>Existing Rooms</h4>
+{% for room in rooms %}
+<form method="post" class="border rounded p-3 mb-3">
+    {% csrf_token %}
+    <input type="hidden" name="room_id" value="{{ room.id }}">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-3"><label>Name</label><input type="text" name="name" value="{{ room.name }}" class="form-control"></div>
+        <div class="col-md-2"><label>Capacity</label><input type="number" name="capacity" value="{{ room.capacity }}" class="form-control"></div>
+        <div class="col-md-2"><label>Color</label><input type="color" name="color" value="{{ room.color }}" class="form-control form-control-color"></div>
+        <div class="col-md-2"><label class="form-check-label">Active <input type="checkbox" name="is_active" class="form-check-input ms-2" {% if room.is_active %}checked{% endif %}></label></div>
+        <div class="col-md-3 text-end">
+            <button type="submit" name="update_room" class="btn btn-success btn-sm">Update</button>
+            <button type="submit" name="delete_room" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?');">Delete</button>
+        </div>
+    </div>
+</form>
+{% empty %}
+<p>No rooms available.</p>
+{% endfor %}
+{% endblock %}
+
