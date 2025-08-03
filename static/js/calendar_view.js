@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var calendarEl = document.getElementById('calendar');
     var businessHoursStart = calendarEl.dataset.businessHoursStart;
     var businessHoursEnd = calendarEl.dataset.businessHoursEnd;
-    var currentUser = calendarEl.dataset.currentUser;
+    var currentUserId = parseInt(calendarEl.dataset.currentUserId, 10);
     var tagify = new Tagify(document.getElementById('eventAttendees'), {
         tagTextProp: 'name', // Use 'name' for display, 'value' (email) for data
         placeholder: "ایمیل‌ها را اضافه کرده و Enter را فشار دهید...",
@@ -141,7 +141,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             var props = info.event.extendedProps;
             // Allow editing only if the user is the organizer
-            if (props.organizer_username !== currentUser) {
+            if (props.organizer_id !== currentUserId) {
                 alert("شما فقط می‌توانید رزروهای خود را ویرایش کنید.");
                 return;
             }
