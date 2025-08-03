@@ -63,6 +63,7 @@ def reservation_api(request):
                     'color': reservation.room.color,
                     'extendedProps': {
                         'pk': reservation.pk, # Add this
+                        'organizer_id': reservation.organizer_id,
                         'organizer_username': reservation.organizer.username, # Rename for clarity
                         'room_name': reservation.room.name,
                         'description': reservation.description,
@@ -80,6 +81,7 @@ def reservation_api(request):
                     'color': reservation.room.color,
                     'extendedProps': {
                         'pk': reservation.pk, # Add this
+                        'organizer_id': reservation.organizer_id,
                         'organizer_username': reservation.organizer.username, # Rename for clarity
                         'room_name': reservation.room.name,
                         'description': reservation.description,

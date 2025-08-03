@@ -38,7 +38,7 @@
     </div>
     
     <!-- Calendar Display Area -->
-    <div id='calendar' data-events-url="{% url 'booking:reservation_api' %}" data-business-hours-start="{{ business_hours_start }}" data-business-hours-end="{{ business_hours_end }}"></div>
+    <div id='calendar' data-events-url="{% url 'booking:reservation_api' %}" data-business-hours-start="{{ business_hours_start }}" data-business-hours-end="{{ business_hours_end }}" data-current-user="{{ request.user.username }}" data-current-user-id="{{ request.user.id }}"></div>
 
     <script src="{% static 'js/calendar_view.js' %}?v=1.2"></script>
 
